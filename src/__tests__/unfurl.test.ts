@@ -102,6 +102,111 @@ describe("resolveGoogleMapsUrl", () => {
       "https://www.google.com/maps/place/Test/@24.7136,46.6753,15z",
     );
   });
+
+  test("preserves exact decoded place-path handoff URLs with _imcp markers", async () => {
+    const placePathHandoffUrl =
+      "https://www.google.com/maps/place/%D8%AD%D9%8A+%D8%A7%D9%84%D9%85%D9%84%D8%A7%D8%B2/data=!4m2!3m1!1s0x123:0x456?_imcp=1";
+    const mock = createRedirectFetch([
+      { status: 200 },
+      {
+        status: 200,
+        body: `<div data-desktop-link="${placePathHandoffUrl}"></div>`,
+      },
+    ]);
+
+    const result = await resolveGoogleMapsUrl(SHORTLINKS.mapsApp, {
+      fetch: mock.fetch,
+      raw: { enabled: true },
+    });
+
+    expect(result.resolvedUrl).toBe(placePathHandoffUrl);
+    expect(result.raw?.html?.extractedUrls).toContain(placePathHandoffUrl);
+  });
+
+  test("recursively re-follows shortlink handoffs discovered in HTML shells", async () => {
+    const shortLinkHandoff = "https://maps.app.goo.gl/handoff123?_imcp=1";
+    const finalPlacePathUrl =
+      "https://www.google.com/maps/place/%D8%AD%D9%8A+%D8%A7%D9%84%D9%85%D9%84%D8%A7%D8%B2/data=!4m2!3m1!1s0x123:0x456";
+    const mock = createRedirectFetch([
+      { status: 200 },
+      {
+        status: 200,
+        body: `<html><body><div data-desktop-link="${shortLinkHandoff}"></div></body></html>`,
+      },
+      { status: 302, location: finalPlacePathUrl },
+      { status: 200 },
+      { status: 200, body: "<html><body>No direct coords</body></html>" },
+    ]);
+
+    const result = await resolveGoogleMapsUrl(SHORTLINKS.mapsApp, {
+      fetch: mock.fetch,
+      raw: { enabled: true },
+    });
+
+    expect(result.resolvedUrl).toBe(finalPlacePathUrl);
+    expect(mock.requestedUrls).toEqual([
+      "https://maps.app.goo.gl/abc123",
+      "https://maps.app.goo.gl/abc123",
+      shortLinkHandoff,
+      finalPlacePathUrl,
+      finalPlacePathUrl,
+    ]);
+  });
+
+  test("prevents recursive shortlink handoff loops", async () => {
+    const firstShortLink = "https://maps.app.goo.gl/abc123";
+    const secondShortLink = "https://maps.app.goo.gl/loop123?_imcp=1";
+    const mock = createRedirectFetch([
+      { status: 200 },
+      {
+        status: 200,
+        body: `<html><body><div data-desktop-link="${secondShortLink}"></div></body></html>`,
+      },
+      { status: 200 },
+      {
+        status: 200,
+        body: `<html><body><div data-desktop-link="${firstShortLink}"></div></body></html>`,
+      },
+    ]);
+
+    const result = await resolveGoogleMapsUrl(SHORTLINKS.mapsApp, {
+      fetch: mock.fetch,
+      raw: { enabled: true },
+    });
+
+    expect(result.resolvedUrl).toBe(firstShortLink);
+    expect(result.redirectCount).toBe(4);
+    expect(mock.requestedUrls).toEqual([
+      firstShortLink,
+      firstShortLink,
+      secondShortLink,
+      secondShortLink,
+    ]);
+  });
+
+  test("rejects unsafe data-desktop-link values", async () => {
+    for (const handoff of [
+      "javascript:alert(1)",
+      "ftp://maps.app.goo.gl/unsafe",
+      "https://evil.com/steal",
+      "%E0%A4%A",
+    ]) {
+      const mock = createRedirectFetch([
+        { status: 200 },
+        {
+          status: 200,
+          body: `<html><body><div data-desktop-link="${handoff}"></div></body></html>`,
+        },
+      ]);
+
+      // eslint-disable-next-line no-await-in-loop -- Each handoff case uses isolated mock state.
+      const result = await resolveGoogleMapsUrl(SHORTLINKS.mapsApp, {
+        fetch: mock.fetch,
+      });
+
+      expect(result.resolvedUrl).toBe("https://maps.app.goo.gl/abc123");
+    }
+  });
 });
 
 describe("unfurlGoogleMapsUrl", () => {

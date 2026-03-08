@@ -34,6 +34,7 @@ const META_LATITUDE_PATTERN =
   /(?:latitude|place:location:latitude)['"]\s*(?:content|value)=['"]\s*(-?\d+(?:\.\d+)?)/i;
 const META_LONGITUDE_PATTERN =
   /(?:longitude|place:location:longitude)['"]\s*(?:content|value)=['"]\s*(-?\d+(?:\.\d+)?)/i;
+const PUBLIC_WEB_PROTOCOLS: ReadonlySet<string> = new Set(["http:", "https:"]);
 
 function isValidCoordinate(latitude: number, longitude: number): boolean {
   if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) return false;
@@ -86,6 +87,7 @@ function normalizeHtmlUrl(rawValue: string): string | null {
     return null;
   }
 
+  if (!PUBLIC_WEB_PROTOCOLS.has(parsedUrl.protocol.toLowerCase())) return null;
   if (!isAllowedGoogleMapsDomain(parsedUrl.hostname)) return null;
   return parsedUrl.toString();
 }

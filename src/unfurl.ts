@@ -54,6 +54,14 @@ interface HtmlFallbackResult extends FetchStepResult {
   readonly htmlArtifacts?: RawArtifacts["html"];
 }
 
+interface RecursiveShortLinkResult {
+  readonly resolvedUrl: string;
+  readonly finalHttpStatus: number | null;
+  readonly hops: readonly RedirectHopRaw[];
+  readonly usedHtmlFallback: boolean;
+  readonly htmlArtifacts?: RawArtifacts["html"];
+}
+
 function shouldCaptureRaw(
   options: UnfurlOptions,
   stage: NonNullable<NonNullable<UnfurlOptions["raw"]>["stages"]>[number],
@@ -61,6 +69,18 @@ function shouldCaptureRaw(
   if (options.raw?.enabled !== true) return false;
   if (options.raw.stages === undefined) return true;
   return options.raw.stages.includes(stage);
+}
+
+function toCanonicalShortLinkUrl(rawValue: string): string | null {
+  let parsedUrl: URL;
+  try {
+    parsedUrl = new URL(rawValue);
+  } catch {
+    return null;
+  }
+
+  if (!isShortLinkDomain(parsedUrl.hostname)) return null;
+  return canonicalizeGoogleMapsUrl(parsedUrl.toString());
 }
 
 function normalizeInputOrThrow(rawInput: string): {
@@ -298,6 +318,77 @@ async function followGetFallback(
   }
 }
 
+async function resolveShortLinkRecursively(args: {
+  startUrl: string;
+  options: UnfurlOptions;
+  visitedShortLinks: Set<string>;
+}): Promise<RecursiveShortLinkResult> {
+  const canonicalStart = canonicalizeGoogleMapsUrl(args.startUrl);
+  if (args.visitedShortLinks.has(canonicalStart)) {
+    return {
+      resolvedUrl: canonicalStart,
+      finalHttpStatus: null,
+      hops: [],
+      usedHtmlFallback: false,
+    };
+  }
+  args.visitedShortLinks.add(canonicalStart);
+
+  const headResult = await followHeadRedirects(canonicalStart, args.options);
+  const headHasDirectCoords = extractCoordsFromUrl(headResult.resolvedUrl) !== null;
+  if (
+    headHasDirectCoords ||
+    (headResult.finalHttpStatus !== null && headResult.finalHttpStatus >= 400)
+  ) {
+    return {
+      resolvedUrl: headResult.resolvedUrl,
+      finalHttpStatus: headResult.finalHttpStatus,
+      hops: headResult.hops,
+      usedHtmlFallback: false,
+    };
+  }
+
+  const getResult = await followGetFallback(headResult.resolvedUrl, args.options);
+  const intermediateHops = [...headResult.hops, ...getResult.hops];
+  const shortLinkCandidate = toCanonicalShortLinkUrl(getResult.resolvedUrl);
+  if (shortLinkCandidate === null) {
+    return {
+      resolvedUrl: getResult.resolvedUrl,
+      finalHttpStatus: getResult.finalHttpStatus ?? headResult.finalHttpStatus,
+      hops: intermediateHops,
+      usedHtmlFallback: getResult.usedHtmlFallback,
+      htmlArtifacts: getResult.htmlArtifacts,
+    };
+  }
+
+  if (args.visitedShortLinks.has(shortLinkCandidate)) {
+    return {
+      resolvedUrl: shortLinkCandidate,
+      finalHttpStatus: getResult.finalHttpStatus ?? headResult.finalHttpStatus,
+      hops: intermediateHops,
+      usedHtmlFallback: getResult.usedHtmlFallback,
+      htmlArtifacts: getResult.htmlArtifacts,
+    };
+  }
+
+  const recursiveResult = await resolveShortLinkRecursively({
+    startUrl: shortLinkCandidate,
+    options: args.options,
+    visitedShortLinks: args.visitedShortLinks,
+  });
+
+  return {
+    resolvedUrl: recursiveResult.resolvedUrl,
+    finalHttpStatus:
+      recursiveResult.finalHttpStatus ??
+      getResult.finalHttpStatus ??
+      headResult.finalHttpStatus,
+    hops: [...intermediateHops, ...recursiveResult.hops],
+    usedHtmlFallback: getResult.usedHtmlFallback || recursiveResult.usedHtmlFallback,
+    htmlArtifacts: recursiveResult.htmlArtifacts ?? getResult.htmlArtifacts,
+  };
+}
+
 function createUnfurlErrorEnvelope(
   rawInput: string,
   error: GoogleMapsUrlError,
@@ -442,67 +533,41 @@ export async function resolveGoogleMapsUrl(
     };
   }
 
-  const headResult = await followHeadRedirects(requestedUrl, options);
-  const headHasDirectCoords = extractCoordsFromUrl(headResult.resolvedUrl) !== null;
-
-  if (
-    headHasDirectCoords ||
-    (headResult.finalHttpStatus !== null && headResult.finalHttpStatus >= 400)
-  ) {
-    let rawArtifacts: RawArtifacts | undefined;
-    if (shouldCaptureRaw(options, "redirects")) {
-      rawArtifacts = appendRawArtifacts(rawArtifacts, {
-        redirects: {
-          hops: headResult.hops,
-          finalHttpStatus: headResult.finalHttpStatus,
-        },
-      });
-    }
-    if (shouldCaptureRaw(options, "resolved-url")) {
-      rawArtifacts = appendRawArtifacts(rawArtifacts, {
-        resolvedUrl: { finalUrl: headResult.resolvedUrl },
-      });
-    }
-
-    return {
-      inputUrl: trimToNull(rawInput) ?? rawInput,
-      canonicalUrl: requestedUrl,
-      resolvedUrl: headResult.resolvedUrl,
-      redirectCount: headResult.hops.length,
-      finalHttpStatus: headResult.finalHttpStatus,
-      usedHtmlFallback: false,
-      raw: rawArtifacts,
-    };
-  }
-
-  const getResult = await followGetFallback(headResult.resolvedUrl, options);
+  const shortLinkResolution = await resolveShortLinkRecursively({
+    startUrl: requestedUrl,
+    options,
+    visitedShortLinks: new Set<string>(),
+  });
   let rawArtifacts: RawArtifacts | undefined;
   if (shouldCaptureRaw(options, "redirects")) {
     rawArtifacts = appendRawArtifacts(rawArtifacts, {
       redirects: {
-        hops: [...headResult.hops, ...getResult.hops],
-        finalHttpStatus: getResult.finalHttpStatus ?? headResult.finalHttpStatus,
+        hops: shortLinkResolution.hops,
+        finalHttpStatus: shortLinkResolution.finalHttpStatus,
       },
     });
   }
   if (shouldCaptureRaw(options, "resolved-url")) {
     rawArtifacts = appendRawArtifacts(rawArtifacts, {
-      resolvedUrl: { finalUrl: getResult.resolvedUrl },
+      resolvedUrl: { finalUrl: shortLinkResolution.resolvedUrl },
     });
   }
-  if (shouldCaptureRaw(options, "html") && getResult.htmlArtifacts !== undefined) {
+  if (
+    shouldCaptureRaw(options, "html") &&
+    shortLinkResolution.htmlArtifacts !== undefined
+  ) {
     rawArtifacts = appendRawArtifacts(rawArtifacts, {
-      html: getResult.htmlArtifacts,
+      html: shortLinkResolution.htmlArtifacts,
     });
   }
 
   return {
     inputUrl: trimToNull(rawInput) ?? rawInput,
     canonicalUrl: requestedUrl,
-    resolvedUrl: getResult.resolvedUrl,
-    redirectCount: headResult.hops.length + getResult.hops.length,
-    finalHttpStatus: getResult.finalHttpStatus ?? headResult.finalHttpStatus,
-    usedHtmlFallback: getResult.usedHtmlFallback,
+    resolvedUrl: shortLinkResolution.resolvedUrl,
+    redirectCount: shortLinkResolution.hops.length,
+    finalHttpStatus: shortLinkResolution.finalHttpStatus,
+    usedHtmlFallback: shortLinkResolution.usedHtmlFallback,
     raw: rawArtifacts,
   };
 }

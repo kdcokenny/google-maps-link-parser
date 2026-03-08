@@ -51,6 +51,80 @@ describe("enrichment", () => {
     expect(result.raw?.geocoding?.providerStatus).toBe("OK");
   });
 
+  test("geocoding text precedence prefers q= over place-path text", async () => {
+    let geocodingRequestUrl = "";
+
+    const result = await analyzeGoogleMapsUrl(
+      "https://www.google.com/maps/place/NotUsed?q=Preferred+Query",
+      {
+        mode: "enriched",
+        enrich: {
+          google: {
+            apiKey: "test-key",
+            enableReverseGeocoding: false,
+            enablePlaces: false,
+            enableDirections: false,
+            fetch: async (input) => {
+              geocodingRequestUrl = typeof input === "string" ? input : String(input);
+              return jsonResponse(GEOCODING_OK);
+            },
+          },
+        },
+      },
+    );
+
+    expect(result.location.value?.source).toBe("provider-geocoding");
+    expect(new URL(geocodingRequestUrl).searchParams.get("address")).toBe(
+      "Preferred Query",
+    );
+  });
+
+  test("geocodes decoded /maps/place text when q= is missing", async () => {
+    let geocodingRequestUrl = "";
+
+    const result = await analyzeGoogleMapsUrl(TEXT_URLS.placePathText, {
+      mode: "enriched",
+      enrich: {
+        google: {
+          apiKey: "test-key",
+          enableReverseGeocoding: false,
+          enablePlaces: false,
+          enableDirections: false,
+          fetch: async (input) => {
+            geocodingRequestUrl = typeof input === "string" ? input : String(input);
+            return jsonResponse(GEOCODING_OK);
+          },
+        },
+      },
+    });
+
+    expect(result.location.value?.source).toBe("provider-geocoding");
+    expect(new URL(geocodingRequestUrl).searchParams.get("address")).toBe("حي الملاز");
+  });
+
+  test("skips geocoding fallback when direct coordinates already exist", async () => {
+    let providerCallCount = 0;
+
+    const result = await analyzeGoogleMapsUrl(STABLE_COORDINATE_URLS.atPattern, {
+      mode: "enriched",
+      enrich: {
+        google: {
+          apiKey: "test-key",
+          enableReverseGeocoding: false,
+          enablePlaces: false,
+          enableDirections: false,
+          fetch: async () => {
+            providerCallCount += 1;
+            return jsonResponse(GEOCODING_OK);
+          },
+        },
+      },
+    });
+
+    expect(result.location.value?.source).toBe("at-pattern");
+    expect(providerCallCount).toBe(0);
+  });
+
   test("reverse geocodes an existing coordinate result when address fields are missing", async () => {
     const base = parseGoogleMapsUrl(STABLE_COORDINATE_URLS.atPattern, {
       raw: { enabled: true },
