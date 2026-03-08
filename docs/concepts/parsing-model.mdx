@@ -1,0 +1,45 @@
+---
+title: Parsing model
+description: Understand the stable normalized envelope and extraction precedence.
+---
+
+## Stable envelope first
+
+The package keeps one top-level result shape across all modes. That means your application can branch on a few stable fields:
+
+- `status`
+- `mode`
+- `intent`
+- `resolution.status`
+- section statuses such as `location.status` and `place.status`
+
+## Coordinate precedence
+
+When a URL contains multiple coordinate-like patterns, the parser prefers more explicit sources first.
+
+1. `@lat,lng`
+2. `q=lat,lng`
+3. `query=lat,lng`
+4. `!3d...!4d...`
+5. `/place/lat,lng`
+6. `ll=` / `sll=`
+7. numeric `destination=` and `viewpoint=`
+
+This keeps output deterministic.
+
+## Parsed sections
+
+- `location`: resolved latitude/longitude with source attribution
+- `place`: place-path text, formatted address, identifiers, plus code, and provider-enriched place fields
+- `route`: directions metadata such as origin, destination, travel mode, and optionally duration/distance
+- `query`: text searches and map actions
+- `mapView`: zoom, heading, pitch, pano ID, and map center when available
+
+## Identifier model
+
+`featureId` and `placeId` are intentionally separate.
+
+- `featureId` comes from the shared URL itself, usually from `ftid` or a hex-like token inside a Google Maps path.
+- `placeId` comes from optional provider enrichment.
+
+That separation matters because real shared URLs often expose `featureId` long before a public API lookup yields a `place_id`.

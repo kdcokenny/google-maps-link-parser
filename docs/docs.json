@@ -1,0 +1,95 @@
+{
+  "$schema": "https://mintlify.com/docs.json",
+  "name": "google-maps-link-parser",
+  "theme": "mint",
+  "logo": {
+    "light": "/logo/light.svg",
+    "dark": "/logo/dark.svg"
+  },
+  "favicon": "/favicon.svg",
+  "colors": {
+    "primary": "#0f766e",
+    "light": "#ccfbf1",
+    "dark": "#134e4a"
+  },
+  "navbar": {
+    "links": [
+      {
+        "label": "GitHub",
+        "href": "https://github.com/kdcokenny/google-maps-link-parser"
+      },
+      {
+        "label": "npm",
+        "href": "https://www.npmjs.com/package/google-maps-link-parser"
+      }
+    ],
+    "primary": {
+      "type": "button",
+      "label": "Quick start",
+      "href": "/getting-started/quick-start"
+    }
+  },
+  "navigation": {
+    "tabs": [
+      {
+        "tab": "Docs",
+        "groups": [
+          {
+            "group": "Getting Started",
+            "pages": [
+              "index",
+              "getting-started/installation",
+              "getting-started/quick-start"
+            ]
+          },
+          {
+            "group": "Concepts",
+            "pages": [
+              "concepts/parsing-model",
+              "concepts/parse-vs-unfurl-vs-enrich",
+              "concepts/security-model"
+            ]
+          },
+          {
+            "group": "Guides",
+            "pages": [
+              "guides/parse-coordinates",
+              "guides/handle-short-links",
+              "guides/raw-artifacts",
+              "guides/error-handling"
+            ]
+          },
+          {
+            "group": "Examples",
+            "pages": ["examples/node-usage", "examples/browser-usage"]
+          },
+          {
+            "group": "API Reference",
+            "pages": [
+              "api-reference/overview",
+              "api-reference/errors",
+              "api-reference/types"
+            ]
+          },
+          {
+            "group": "Project",
+            "pages": ["releases"]
+          }
+        ]
+      }
+    ],
+    "global": {}
+  },
+  "seo": {
+    "metatags": {
+      "og:title": "google-maps-link-parser",
+      "og:description": "Bun-first Google Maps URL parsing, short-link unfurling, and optional enrichment for public shared URLs.",
+      "twitter:card": "summary_large_image"
+    }
+  },
+  "footer": {
+    "socials": {
+      "github": "https://github.com/kdcokenny/google-maps-link-parser"
+    }
+  }
+}

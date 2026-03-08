@@ -1,0 +1,38 @@
+---
+title: Error handling
+description: Use safe envelopes or throwing variants depending on the integration boundary.
+---
+
+## Safe variants
+
+Safe variants return the same envelope shape even on failure.
+
+```ts
+const result = parseGoogleMapsUrl("https://share.google/example");
+
+if (result.status === "error") {
+  console.error(result.error?.code, result.error?.message);
+}
+```
+
+## Throwing variants
+
+Throwing variants are better when invalid input should halt a request immediately.
+
+```ts
+import { unfurlGoogleMapsUrlOrThrow } from "google-maps-link-parser";
+
+const result = await unfurlGoogleMapsUrlOrThrow(url);
+```
+
+## Provider denied responses
+
+Denied provider responses are not treated like parser crashes.
+
+Instead, enriched mode records them as:
+
+- warning diagnostics
+- `raw.providerErrors`
+- preserved normalized data from the parse or unfurl stage
+
+That means you can still use the URL-derived data even when a Google API key is restricted or a provider is disabled.

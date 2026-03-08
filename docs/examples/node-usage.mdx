@@ -1,0 +1,32 @@
+---
+title: Node usage
+description: Use the library in Bun or Node server code.
+---
+
+```ts
+import {
+  analyzeGoogleMapsUrl,
+  parseGoogleMapsUrl,
+  unfurlGoogleMapsUrl,
+} from "google-maps-link-parser";
+
+const parsed = parseGoogleMapsUrl("https://www.google.com/maps/@24.7136,46.6753,15z");
+
+const unfurled = await unfurlGoogleMapsUrl("https://maps.app.goo.gl/example", {
+  raw: { enabled: true },
+});
+
+const enriched = await analyzeGoogleMapsUrl(
+  "https://www.google.com/maps?q=Malaz+Riyadh",
+  {
+    mode: "enriched",
+    enrich: {
+      policy: "when-needed",
+      google: {
+        apiKey: process.env.GOOGLE_MAPS_API_KEY ?? "",
+        enablePlaces: true,
+      },
+    },
+  },
+);
+```

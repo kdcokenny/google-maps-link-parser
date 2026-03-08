@@ -1,0 +1,44 @@
+---
+title: Handle short links
+description: Resolve `maps.app.goo.gl` and `goo.gl/maps` links safely, including dead links.
+---
+
+## Basic unfurling
+
+```ts
+import { unfurlGoogleMapsUrl } from "google-maps-link-parser";
+
+const result = await unfurlGoogleMapsUrl("https://maps.app.goo.gl/example", {
+  raw: { enabled: true },
+});
+
+console.log(result.resolution.status);
+console.log(result.resolution.resolvedUrl);
+console.log(result.raw?.redirects?.hops);
+```
+
+## Multi-hop behavior
+
+Some short links resolve through multiple intermediate Google URLs before they become useful. The library preserves that chain when raw artifacts are enabled.
+
+```ts
+console.log(result.raw?.redirects?.hops);
+// [
+//   { requestUrl, responseStatus, locationHeader },
+//   { requestUrl, responseStatus, locationHeader },
+//   ...
+// ]
+```
+
+## Dead tokens and 404 outcomes
+
+Dead short links do not crash the parser.
+
+Instead, you get:
+
+- `status: "ok"`
+- `resolution.status: "dead-end"`
+- a warning diagnostic
+- the final HTTP status when available
+
+That keeps downstream code predictable while still surfacing failure clearly.

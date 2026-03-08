@@ -1,0 +1,13 @@
+{
+  "$schema": "https://typedoc.org/schema.json",
+  "entryPoints": ["src/index.ts"],
+  "out": "docs/api-reference/generated",
+  "json": "docs/api-reference/generated/api.json",
+  "plugin": [],
+  "excludeExternals": true,
+  "excludePrivate": true,
+  "excludeProtected": true,
+  "readme": "none",
+  "tsconfig": "tsconfig.json",
+  "sort": ["source-order"]
+}

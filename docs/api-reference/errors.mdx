@@ -1,0 +1,21 @@
+---
+title: Errors
+description: Typed error classes and when to use them.
+---
+
+## Error classes
+
+- `GoogleMapsUrlError`
+- `EmptyInputError`
+- `InvalidGoogleMapsUrlError`
+- `DisallowedHostnameError`
+- `UnsupportedGoogleMapsUrlError`
+- `RedirectLimitError`
+- `NetworkTimeoutError`
+- `NetworkRequestError`
+- `GoogleProviderError`
+
+## Guidance
+
+Use throwing variants when invalid URLs should interrupt the request immediately.
+Use safe variants when you want a single return shape throughout the call chain.

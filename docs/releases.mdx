@@ -1,0 +1,17 @@
+---
+title: Releases
+description: Versioning, changelog generation, and npm publishing.
+---
+
+## Release flow
+
+1. Update the package version intentionally.
+2. Commit the change with a conventional commit.
+3. Push a semver tag such as `v0.1.0`.
+4. The release workflow runs checks, builds docs, generates notes with `git-cliff`, creates a GitHub Release, and publishes to npm with provenance.
+
+## Changelog strategy
+
+This repository uses `git-cliff` rather than automatic semantic version inference.
+
+That keeps version bumps intentional while still generating polished release notes from conventional commits.

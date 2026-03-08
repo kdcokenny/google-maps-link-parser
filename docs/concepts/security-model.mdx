@@ -1,0 +1,44 @@
+---
+title: Security model
+description: Hostname restrictions, redirect validation, and SSRF defenses.
+---
+
+## Host allow-listing
+
+The library only accepts known public Google Maps hosts.
+
+It rejects:
+
+- non-Google hosts such as `bing.com`
+- suffix spoofing such as `google.com.evil`
+- unsupported auth-gated share flows such as `share.google`
+
+## Redirect safety
+
+Every redirect hop is validated before the library follows it.
+
+That means a short link cannot silently jump from an allowed Google domain to an arbitrary host.
+
+## Bounded resolution
+
+Unfurling is intentionally bounded by:
+
+- a maximum redirect count
+- per-request timeouts
+- direct parsing before network work
+
+## HTML shell handling
+
+HTML extraction is a fallback path.
+
+The package treats shell signals such as `APP_INITIALIZATION_STATE` as **weak evidence**, not primary truth. Stronger signals win first:
+
+1. direct URL coordinates
+2. redirect locations with coordinates
+3. embedded Google Maps URLs inside the HTML shell
+4. HTML coordinate heuristics
+
+<Warning>
+  The library is not designed for private or authenticated Google pages. It only targets
+  public shared URLs that can be resolved safely without user cookies.
+</Warning>

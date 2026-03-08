@@ -1,0 +1,94 @@
+---
+title: Introduction
+description: Parse, normalize, unfurl, and optionally enrich public Google Maps URLs with one stable typed result envelope.
+---
+
+# google-maps-link-parser
+
+`google-maps-link-parser` is a Bun-first TypeScript library for working with **public shared Google Maps URLs**.
+
+It does three things well:
+
+<CardGroup cols={3}>
+  <Card title="Parse" icon="magnifying-glass" href="/concepts/parsing-model">
+    Pure URL analysis with zero network calls.
+  </Card>
+  <Card title="Unfurl" icon="arrow-path" href="/guides/handle-short-links">
+    SSRF-safe redirect following for `maps.app.goo.gl` and `goo.gl/maps`.
+  </Card>
+  <Card title="Enrich" icon="sparkles" href="/concepts/parse-vs-unfurl-vs-enrich">
+    Optional Google API lookups with explicit cost controls.
+  </Card>
+</CardGroup>
+
+## Why this package exists
+
+Real Google Maps links are inconsistent in the wild. You will see:
+
+- coordinate views like `@24.7136,46.6753,15z`
+- dropped pins like `?q=24.7136,46.6753`
+- legacy center parameters like `ll=24.7136,46.6753`
+- `data=!3d...!4d...` payloads
+- place pages with `ftid` identifiers
+- directions and search URLs
+- short links that require multiple redirects before they become useful
+
+This package normalizes all of that into one stable top-level envelope so your app can depend on a single shape instead of a pile of regexes.
+
+## Design principles
+
+<Note>
+  The package only targets **public shared URLs**. Private, authenticated, or unsupported
+  Google share flows fail clearly instead of being guessed.
+</Note>
+
+- Early exits and typed boundaries
+- Direct parsing before network work
+- Strong hostname validation on every redirect hop
+- Explicit source attribution for coordinates and metadata
+- Raw artifacts only when you opt in
+
+## What you get back
+
+Every mode returns the same top-level object:
+
+```ts
+interface GoogleMapsEnvelope {
+  status: "ok" | "error";
+  mode: "minimal" | "unfurl" | "enriched";
+  intent:
+    | "coordinates"
+    | "place"
+    | "search"
+    | "directions"
+    | "map"
+    | "streetview"
+    | "unknown";
+  input: InputMetadata;
+  resolution: ResolutionMetadata;
+  identifiers: {
+    featureId: string | null;
+    placeId: string | null;
+    plusCode: PlusCode | null;
+  };
+  location: NormalizedSection<LocationData>;
+  place: NormalizedSection<PlaceData>;
+  route: NormalizedSection<RouteData>;
+  query: NormalizedSection<QueryData>;
+  mapView: NormalizedSection<MapViewData>;
+  raw?: RawArtifacts;
+}
+```
+
+That stable envelope is the product. Modes only change **how much work** the library is allowed to do.
+
+## Start here
+
+<CardGroup cols={2}>
+  <Card title="Install" href="/getting-started/installation">
+    Bun, npm, and pnpm setup.
+  </Card>
+  <Card title="Quick start" href="/getting-started/quick-start">
+    Parse a direct Maps URL and unfurl a short link.
+  </Card>
+</CardGroup>

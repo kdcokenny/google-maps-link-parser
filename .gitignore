@@ -1,0 +1,22 @@
+# dependencies
+node_modules/
+
+# build outputs
+dist/
+coverage/
+
+# docs build artifacts
+docs/.mint/
+docs/api-reference/generated/
+
+# editor and operating system noise
+.DS_Store
+.vscode/
+.idea/
+
+# local env
+.env
+.env.*
+
+# package manager
+bun.lockb

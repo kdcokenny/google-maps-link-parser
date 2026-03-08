@@ -1,0 +1,24 @@
+---
+title: Browser usage
+description: Use pure parsing helpers in browser code without provider calls.
+---
+
+Pure helpers work well in browsers because they do not need Node-only APIs.
+
+```ts
+import { isGoogleMapsUrl, parseGoogleMapsUrl } from "google-maps-link-parser";
+
+const userInput = window.prompt("Paste a Google Maps URL") ?? "";
+if (!isGoogleMapsUrl(userInput)) {
+  throw new Error("Not a supported public Google Maps URL");
+}
+
+const parsed = parseGoogleMapsUrl(userInput);
+console.log(parsed.intent);
+console.log(parsed.location.value);
+```
+
+<Warning>
+  Network unfurling and provider enrichment in the browser may have CORS and key-exposure
+  implications. Prefer server-side unfurling and enrichment when practical.
+</Warning>

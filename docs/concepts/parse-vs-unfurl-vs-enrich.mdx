@@ -1,0 +1,47 @@
+---
+title: Parse vs unfurl vs enrich
+description: Choose the right mode for your cost, latency, and accuracy needs.
+---
+
+## `minimal`
+
+`minimal` never performs network requests.
+
+Use it when:
+
+- you already have a full Google Maps URL
+- you only need coordinates or typed URL metadata
+- you want deterministic, cheap parsing in hot code paths
+
+## `unfurl`
+
+`unfurl` allows public redirect resolution and optional HTML fallback.
+
+Use it when:
+
+- users paste `maps.app.goo.gl` or `goo.gl/maps` links
+- you need the final browser-resolved URL
+- you want redirect-chain artifacts for debugging or analytics
+
+## `enriched`
+
+`enriched` starts from the parsed or unfurled result, then optionally calls Google APIs.
+
+Use it when:
+
+- you need a formatted address from coordinates
+- a text query should become coordinates
+- directions URLs should return distance or duration
+- you want a provider `place_id`
+
+## Cost policy
+
+`enriched` mode accepts a policy:
+
+- `when-needed`: only call provider APIs when normalized data is still missing
+- `always`: keep enrichment enabled even when the URL already provides useful data
+
+<Tip>
+  Use `when-needed` unless you have a business requirement to standardize provider-backed
+  fields across every result.
+</Tip>

@@ -1,0 +1,50 @@
+---
+title: Installation
+description: Install the package and set up the local development workflow.
+---
+
+## Runtime support
+
+- Bun 1.3+
+- Node.js 20.17+
+- Browsers for pure parsing helpers
+- Worker and edge runtimes that provide `fetch`
+
+## Install the package
+
+```bash
+# Bun
+bun add google-maps-link-parser
+
+# npm
+npm install google-maps-link-parser
+
+# pnpm
+pnpm add google-maps-link-parser
+```
+
+## Install the repo locally
+
+```bash
+bun install
+```
+
+If you are bootstrapping the repository for the first time and the lockfile is missing, create it once with:
+
+```bash
+bun install --save-text-lockfile --lockfile-only
+```
+
+## Common commands
+
+```bash
+bun run build
+bun run check
+bun run test
+bun run docs:dev
+```
+
+<Tip>
+  Use `bun run check` before opening a PR. It runs format checks, linting, type checking,
+  and tests in a deterministic order.
+</Tip>

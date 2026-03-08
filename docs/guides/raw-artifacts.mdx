@@ -1,0 +1,42 @@
+---
+title: Raw artifacts
+description: Capture raw parsing, redirect, HTML, and provider artifacts without polluting normalized output.
+---
+
+## Raw output is opt-in
+
+Normalized output is the main API. Raw artifacts are additive.
+
+```ts
+const result = await unfurlGoogleMapsUrl(url, {
+  raw: { enabled: true },
+});
+```
+
+## Raw groups
+
+The package groups raw data by stage:
+
+- `parse`
+- `redirects`
+- `resolvedUrl`
+- `html`
+- `geocoding`
+- `reverseGeocoding`
+- `places`
+- `directions`
+- `providerErrors`
+
+## Why raw matters
+
+Google Maps behavior is underdocumented in practice. Raw artifacts help when you need to:
+
+- inspect redirect chains from short links
+- compare the input URL to the resolved URL
+- understand why HTML fallback succeeded or failed
+- preserve provider denied payloads such as `REQUEST_DENIED`
+
+<Note>
+  Raw output never replaces normalized fields. It is there for debugging, auditability,
+  and edge-case handling.
+</Note>

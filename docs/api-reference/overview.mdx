@@ -1,0 +1,40 @@
+---
+title: API overview
+description: The main public functions and how they fit together.
+---
+
+## Core functions
+
+### `parseGoogleMapsUrl`
+
+Safe, pure parsing with zero network requests.
+
+### `parseGoogleMapsUrlOrThrow`
+
+Throwing parse variant for strict request boundaries.
+
+### `resolveGoogleMapsUrl`
+
+Low-level short-link resolver. Returns the resolved URL plus redirect metadata.
+
+### `unfurlGoogleMapsUrl`
+
+Safe high-level unfurl helper that returns the normalized envelope.
+
+### `unfurlGoogleMapsUrlOrThrow`
+
+Throwing unfurl variant.
+
+### `analyzeGoogleMapsUrl`
+
+Mode-aware helper for `minimal`, `unfurl`, and `enriched` workflows.
+
+### `enrichGoogleMapsEnvelope`
+
+Provider enrichment for an existing normalized envelope.
+
+## Generated API docs
+
+`bun run docs:generate-api` writes TypeDoc output to `docs/api-reference/generated/`.
+
+Use the generated JSON as an implementation reference. Keep the hand-written pages as the primary conceptual documentation.

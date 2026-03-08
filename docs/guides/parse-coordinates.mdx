@@ -1,0 +1,34 @@
+---
+title: Parse coordinates
+description: Extract coordinates, zoom, and map-view data from common Google Maps URL forms.
+---
+
+## Direct coordinate URL forms
+
+```ts
+import { parseGoogleMapsUrl } from "google-maps-link-parser";
+
+const urls = [
+  "https://www.google.com/maps/@24.7136,46.6753,15z",
+  "https://maps.google.com/?q=24.861307,46.646618",
+  "https://www.google.com/maps?ll=24.7136,46.6753",
+  "https://www.google.com/maps/place/24.7136,46.6753",
+  "https://www.google.com/maps/data=!3d24.7136!4d46.6753",
+];
+
+for (const url of urls) {
+  const result = parseGoogleMapsUrl(url);
+  console.log(result.location.value);
+}
+```
+
+## Street View and map actions
+
+```ts
+const result = parseGoogleMapsUrl(
+  "https://www.google.com/maps?map_action=pano&viewpoint=24.7136,46.6753&pano=test-pano",
+);
+
+console.log(result.intent); // "streetview"
+console.log(result.mapView.value?.panoId); // "test-pano"
+```
