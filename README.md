@@ -198,6 +198,12 @@ console.log(parseGoogleMapsUrl("https://share.google/example").error);
 bun install
 bun run check
 bun run build
+
+# opt-in live public-network coverage
+bun run test:live
+
+# opt-in provider-backed live coverage
+LIVE_GOOGLE_API_TESTS=1 GOOGLE_MAPS_API_KEY=your-key bun run test:live:providers
 ```
 
 ## Release model

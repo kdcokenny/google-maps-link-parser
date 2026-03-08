@@ -54,6 +54,8 @@
     "check:types": "tsc -p tsconfig.json",
     "test": "bun test",
     "test:coverage": "bun test --coverage",
+    "test:live": "LIVE_NETWORK_TESTS=1 bun test src/__tests__/live-network.test.ts",
+    "test:live:providers": "LIVE_GOOGLE_API_TESTS=1 bun test src/__tests__/live-providers.test.ts",
     "docs:dev": "cd docs && mint dev",
     "docs:build": "cd docs && mint validate && mint broken-links && mint a11y --skip-contrast",
     "docs:generate-api": "typedoc --options typedoc.json",
