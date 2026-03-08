@@ -8,6 +8,7 @@ coverage/
 # docs build artifacts
 docs/.mint/
 docs/api-reference/generated/
+FULL_REPOSITORY_OUTPUT.md
 
 # editor and operating system noise
 .DS_Store
