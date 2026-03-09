@@ -18,8 +18,18 @@ const urls = [
 
 for (const url of urls) {
   const result = parseGoogleMapsUrl(url);
-  console.log(result.location.value);
+  console.log([result.location.value?.latitude, result.location.value?.longitude]);
 }
+```
+
+Output
+
+```txt
+[24.7136, 46.6753]
+[24.861307, 46.646618]
+[24.7136, 46.6753]
+[24.7136, 46.6753]
+[24.7136, 46.6753]
 ```
 
 ## Street View and map actions
@@ -29,6 +39,6 @@ const result = parseGoogleMapsUrl(
   "https://www.google.com/maps?map_action=pano&viewpoint=24.7136,46.6753&pano=test-pano",
 );
 
-console.log(result.intent); // "streetview"
-console.log(result.mapView.value?.panoId); // "test-pano"
+console.log(result.intent); // => "streetview"
+console.log(result.mapView.value?.panoId); // => "test-pano"
 ```

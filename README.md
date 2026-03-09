@@ -50,16 +50,15 @@ if (result.status === "error") {
   throw new Error(result.error?.message ?? "Unexpected parse failure");
 }
 
-console.log(result.intent);
-// "coordinates"
+console.log(result.intent); // => "coordinates"
 
 console.log(result.location.value);
-// {
-//   latitude: 24.7136,
-//   longitude: 46.6753,
-//   source: "at-pattern",
-//   accuracy: "exact"
-// }
+```
+
+Output
+
+```txt
+{ latitude: 24.7136, longitude: 46.6753, source: "at-pattern", accuracy: "exact" }
 ```
 
 ## Parse vs unfurl
@@ -73,11 +72,9 @@ const parsed = parseGoogleMapsUrl(
   "https://www.google.com/maps/place/Riyadh?q=Malaz+Riyadh&ftid=0x123:0x456",
 );
 
-console.log(parsed.place.value?.title);
-// "Riyadh"
+console.log(parsed.place.value?.title); // => "Riyadh"
 
-console.log(parsed.identifiers.featureId);
-// "0x123:0x456"
+console.log(parsed.identifiers.featureId); // => "0x123:0x456"
 ```
 
 Use `unfurlGoogleMapsUrl` when you need short-link expansion.
@@ -85,12 +82,52 @@ Use `unfurlGoogleMapsUrl` when you need short-link expansion.
 ```ts
 import { unfurlGoogleMapsUrl } from "google-maps-link-parser";
 
-const result = await unfurlGoogleMapsUrl("https://maps.app.goo.gl/example", {
+const redirectSteps = [
+  {
+    status: 302,
+    location: "https://www.google.com/maps/@24.7136,46.6753,15z",
+  },
+  { status: 200 },
+];
+
+let redirectIndex = 0;
+const mockFetch = async () => {
+  const step = redirectSteps[redirectIndex++];
+  if (!step) {
+    throw new Error("Unexpected fetch call");
+  }
+
+  return new Response("", {
+    status: step.status,
+    headers: step.location ? { Location: step.location } : {},
+  });
+};
+
+const result = await unfurlGoogleMapsUrl("https://maps.app.goo.gl/abc123?g_st=ic", {
+  fetch: mockFetch,
   raw: { enabled: true },
 });
 
-console.log(result.resolution.resolvedUrl);
+console.log(result.resolution.status); // => "resolved"
+console.log(result.resolution.resolvedUrl); // => "https://www.google.com/maps/@24.7136,46.6753,15z"
 console.log(result.raw?.redirects?.hops);
+```
+
+Output
+
+```txt
+[
+  {
+    requestUrl: "https://maps.app.goo.gl/abc123",
+    responseStatus: 302,
+    locationHeader: "https://www.google.com/maps/@24.7136,46.6753,15z"
+  },
+  {
+    requestUrl: "https://www.google.com/maps/@24.7136,46.6753,15z",
+    responseStatus: 200,
+    locationHeader: null
+  }
+]
 ```
 
 ## Optional enrichment
@@ -100,21 +137,43 @@ console.log(result.raw?.redirects?.hops);
 ```ts
 import { analyzeGoogleMapsUrl } from "google-maps-link-parser";
 
+const providerFetch = async () =>
+  new Response(
+    JSON.stringify({
+      status: "OK",
+      results: [
+        {
+          formatted_address: "Malaz, Riyadh Saudi Arabia",
+          place_id: "place-123",
+          geometry: { location: { lat: 24.7136, lng: 46.6753 } },
+        },
+      ],
+    }),
+    {
+      status: 200,
+      headers: { "Content-Type": "application/json" },
+    },
+  );
+
 const result = await analyzeGoogleMapsUrl("https://www.google.com/maps?q=Malaz+Riyadh", {
   mode: "enriched",
+  raw: { enabled: true },
   enrich: {
-    policy: "when-needed",
     google: {
-      apiKey: process.env.GOOGLE_MAPS_API_KEY ?? "",
-      enablePlaces: true,
-      enableDirections: false,
+      apiKey: "test-key",
+      fetch: providerFetch,
     },
   },
 });
 
 console.log(result.location.value);
-console.log(result.place.value?.formattedAddress);
-console.log(result.raw?.geocoding);
+console.log(result.place.value?.formattedAddress); // => "Malaz, Riyadh Saudi Arabia"
+```
+
+Output
+
+```txt
+{ latitude: 24.7136, longitude: 46.6753, source: "provider-geocoding", accuracy: "approximate" }
 ```
 
 ## Error handling
@@ -130,16 +189,41 @@ import {
 } from "google-maps-link-parser";
 
 try {
-  const parsed = parseGoogleMapsUrlOrThrow("https://share.google/example");
-  console.log(parsed.intent);
+  parseGoogleMapsUrlOrThrow("https://share.google/example");
 } catch (error) {
   if (error instanceof UnsupportedGoogleMapsUrlError) {
     console.error(error.code, error.message);
   }
 }
 
-const unfurled = await unfurlGoogleMapsUrlOrThrow("https://maps.app.goo.gl/example");
-console.log(unfurled.resolution.status);
+const redirectSteps = [
+  {
+    status: 302,
+    location: "https://www.google.com/maps/@24.7136,46.6753,15z",
+  },
+  { status: 200 },
+];
+
+let redirectIndex = 0;
+const mockFetch = async () => {
+  const step = redirectSteps[redirectIndex++];
+  if (!step) {
+    throw new Error("Unexpected fetch call");
+  }
+
+  return new Response("", {
+    status: step.status,
+    headers: step.location ? { Location: step.location } : {},
+  });
+};
+
+const unfurled = await unfurlGoogleMapsUrlOrThrow(
+  "https://maps.app.goo.gl/abc123?g_st=ic",
+  {
+    fetch: mockFetch,
+  },
+);
+console.log(unfurled.resolution.status); // => "resolved"
 ```
 
 ## Security model
@@ -177,14 +261,11 @@ console.log(unfurled.resolution.status);
 ```ts
 import { parseGoogleMapsUrl } from "google-maps-link-parser";
 
-console.log(parseGoogleMapsUrl("not-a-url").error);
-// { code: "invalid_url", message: "Input is not a valid URL." }
+console.log(parseGoogleMapsUrl("not-a-url").error?.code); // => "invalid_url"
 
-console.log(parseGoogleMapsUrl("https://bing.com/maps/@24.7,46.6").error);
-// { code: "disallowed_hostname", message: "Hostname is not an allowed Google Maps host." }
+console.log(parseGoogleMapsUrl("https://bing.com/maps/@24.7,46.6").error?.code); // => "disallowed_hostname"
 
-console.log(parseGoogleMapsUrl("https://share.google/example").error);
-// { code: "unsupported_url", message: "share.google links are recognized but unsupported for public resolution." }
+console.log(parseGoogleMapsUrl("https://share.google/example").error?.code); // => "unsupported_url"
 ```
 
 ## Documentation

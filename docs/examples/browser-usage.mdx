@@ -8,14 +8,20 @@ Pure helpers work well in browsers because they do not need Node-only APIs.
 ```ts
 import { isGoogleMapsUrl, parseGoogleMapsUrl } from "google-maps-link-parser";
 
-const userInput = window.prompt("Paste a Google Maps URL") ?? "";
+const userInput = "https://www.google.com/maps/@24.7136,46.6753,15z";
 if (!isGoogleMapsUrl(userInput)) {
   throw new Error("Not a supported public Google Maps URL");
 }
 
 const parsed = parseGoogleMapsUrl(userInput);
-console.log(parsed.intent);
+console.log(parsed.intent); // => "coordinates"
 console.log(parsed.location.value);
+```
+
+Output
+
+```txt
+{ latitude: 24.7136, longitude: 46.6753, source: "at-pattern", accuracy: "exact" }
 ```
 
 <Warning>

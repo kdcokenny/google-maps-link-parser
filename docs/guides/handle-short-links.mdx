@@ -8,13 +8,34 @@ description: Resolve `maps.app.goo.gl` and `goo.gl/maps` links safely, including
 ```ts
 import { unfurlGoogleMapsUrl } from "google-maps-link-parser";
 
-const result = await unfurlGoogleMapsUrl("https://maps.app.goo.gl/example", {
+const redirectSteps = [
+  {
+    status: 302,
+    location: "https://www.google.com/maps/@24.7136,46.6753,15z",
+  },
+  { status: 200 },
+];
+
+let redirectIndex = 0;
+const mockFetch = async () => {
+  const step = redirectSteps[redirectIndex++];
+  if (!step) {
+    throw new Error("Unexpected fetch call");
+  }
+
+  return new Response("", {
+    status: step.status,
+    headers: step.location ? { Location: step.location } : {},
+  });
+};
+
+const result = await unfurlGoogleMapsUrl("https://maps.app.goo.gl/abc123?g_st=ic", {
+  fetch: mockFetch,
   raw: { enabled: true },
 });
 
-console.log(result.resolution.status);
-console.log(result.resolution.resolvedUrl);
-console.log(result.raw?.redirects?.hops);
+console.log(result.resolution.status); // => "resolved"
+console.log(result.resolution.resolvedUrl); // => "https://www.google.com/maps/@24.7136,46.6753,15z"
 ```
 
 ## Multi-hop behavior
@@ -23,11 +44,23 @@ Some short links resolve through multiple intermediate Google URLs before they b
 
 ```ts
 console.log(result.raw?.redirects?.hops);
-// [
-//   { requestUrl, responseStatus, locationHeader },
-//   { requestUrl, responseStatus, locationHeader },
-//   ...
-// ]
+```
+
+Output
+
+```txt
+[
+  {
+    requestUrl: "https://maps.app.goo.gl/abc123",
+    responseStatus: 302,
+    locationHeader: "https://www.google.com/maps/@24.7136,46.6753,15z"
+  },
+  {
+    requestUrl: "https://www.google.com/maps/@24.7136,46.6753,15z",
+    responseStatus: 200,
+    locationHeader: null
+  }
+]
 ```
 
 ## Dead tokens and 404 outcomes
