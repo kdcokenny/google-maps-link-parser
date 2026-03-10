@@ -8,10 +8,12 @@ on:
 permissions:
   contents: write
   id-token: write
+  pull-requests: read
 
 jobs:
   release:
-    if: github.event.repository.fork == false
+    # Guards: only run on canonical repo, skip prereleases (v1.4.0-rc.1)
+    if: github.repository == 'kdcokenny/google-maps-link-parser' && !contains(github.ref_name, '-')
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -25,9 +27,11 @@ jobs:
           bun-version: 1.3.6
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
-          node-version: 20.17.0
+          # Node 24 ships npm with tokenless OIDC publish support
+          node-version: "24"
+          registry-url: "https://registry.npmjs.org"
 
       - name: Install dependencies
         run: |
