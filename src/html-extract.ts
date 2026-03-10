@@ -35,6 +35,20 @@ const META_LATITUDE_PATTERN =
 const META_LONGITUDE_PATTERN =
   /(?:longitude|place:location:longitude)['"]\s*(?:content|value)=['"]\s*(-?\d+(?:\.\d+)?)/i;
 const PUBLIC_WEB_PROTOCOLS: ReadonlySet<string> = new Set(["http:", "https:"]);
+const HTML_URL_ARTIFACT_PATTERN =
+  /\\u003d|\\u0026amp;|\/u0026amp;|\\u0026|\/u0026|&amp;/gi;
+const ESCAPE_ARTIFACT_REMAINDER_PATTERN = /(?:\\u00|\/u00)[0-9a-z]*/i;
+const PERCENT_ENCODED_EQUALS_ONCE_PATTERN = /%253d/gi;
+const PERCENT_ENCODED_AMPERSAND_ONCE_PATTERN = /%2526/gi;
+const ENCODED_QUERY_ASSIGNMENT_PATTERN = /%3d/i;
+const ENCODED_QUERY_SEPARATOR_PATTERN = /%26/i;
+const RECOVERABLE_ENCODED_QUERY_KEYS: ReadonlySet<string> = new Set([
+  "entry",
+  "ftid",
+  "ll",
+  "sll",
+  "viewpoint",
+]);
 
 function isValidCoordinate(latitude: number, longitude: number): boolean {
   if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) return false;
@@ -76,13 +90,68 @@ function createLocationData(match: CoordinateMatch): LocationData {
   };
 }
 
-function normalizeHtmlUrl(rawValue: string): string | null {
-  const decodedValue = rawValue.replaceAll("&amp;", "&").trim();
-  if (decodedValue === "") return null;
+function normalizeSinglePassHtmlUrlArtifacts(rawValue: string): string {
+  return rawValue.replace(HTML_URL_ARTIFACT_PATTERN, (artifact) => {
+    switch (artifact.toLowerCase()) {
+      case "\\u003d":
+        return "=";
+      case "\\u0026amp;":
+      case "\\u0026":
+      case "/u0026amp;":
+      case "/u0026":
+      case "&amp;":
+        return "&";
+      default:
+        return artifact;
+    }
+  });
+}
 
+function recoverEncodedQueryToken(rawToken: string): string {
+  if (rawToken === "" || rawToken.includes("=")) return rawToken;
+
+  const encodedSegments = rawToken.split(ENCODED_QUERY_SEPARATOR_PATTERN);
+  const recoveredSegments: string[] = [];
+
+  for (const segment of encodedSegments) {
+    const assignmentMatch = segment.match(ENCODED_QUERY_ASSIGNMENT_PATTERN);
+    const assignmentIndex = assignmentMatch?.index;
+    if (assignmentMatch === null || assignmentIndex === undefined) {
+      return rawToken;
+    }
+
+    const key = segment.slice(0, assignmentIndex);
+    if (!RECOVERABLE_ENCODED_QUERY_KEYS.has(key.toLowerCase())) {
+      return rawToken;
+    }
+
+    const value = segment.slice(assignmentIndex + assignmentMatch[0].length);
+    recoveredSegments.push(`${key}=${value}`);
+  }
+
+  return recoveredSegments.join("&");
+}
+
+function recoverPercentEncodedQuerySeparators(candidate: string): string {
+  const questionMarkIndex = candidate.indexOf("?");
+  if (questionMarkIndex === -1) return candidate;
+
+  const hashIndex = candidate.indexOf("#", questionMarkIndex + 1);
+  const queryStartIndex = questionMarkIndex + 1;
+  const queryEndIndex = hashIndex === -1 ? candidate.length : hashIndex;
+  const rawQuery = candidate.slice(queryStartIndex, queryEndIndex);
+  if (rawQuery === "") return candidate;
+
+  const recoveredQuery = rawQuery.split("&").map(recoverEncodedQueryToken).join("&");
+  if (recoveredQuery === rawQuery) return candidate;
+
+  return `${candidate.slice(0, queryStartIndex)}${recoveredQuery}${candidate.slice(queryEndIndex)}`;
+}
+
+function parseAndValidatePublicGoogleMapsUrl(candidate: string): string | null {
   let parsedUrl: URL;
   try {
-    parsedUrl = new URL(decodedValue);
+    parsedUrl = new URL(candidate);
   } catch {
     return null;
   }
@@ -90,6 +159,47 @@ function normalizeHtmlUrl(rawValue: string): string | null {
   if (!PUBLIC_WEB_PROTOCOLS.has(parsedUrl.protocol.toLowerCase())) return null;
   if (!isAllowedGoogleMapsDomain(parsedUrl.hostname)) return null;
   return parsedUrl.toString();
+}
+
+function hasUnresolvedEscapeArtifacts(candidate: string): boolean {
+  return ESCAPE_ARTIFACT_REMAINDER_PATTERN.test(candidate);
+}
+
+function decodeRetryForPercentEscapes(candidate: string): string | null {
+  if (!candidate.includes("%25")) return null;
+
+  const questionMarkIndex = candidate.indexOf("?");
+  if (questionMarkIndex === -1) return null;
+
+  const hashIndex = candidate.indexOf("#", questionMarkIndex + 1);
+  const queryStartIndex = questionMarkIndex + 1;
+  const queryEndIndex = hashIndex === -1 ? candidate.length : hashIndex;
+  const rawQuery = candidate.slice(queryStartIndex, queryEndIndex);
+  if (rawQuery === "") return null;
+
+  const decodedQuery = rawQuery
+    .replace(PERCENT_ENCODED_EQUALS_ONCE_PATTERN, "%3D")
+    .replace(PERCENT_ENCODED_AMPERSAND_ONCE_PATTERN, "%26");
+  if (decodedQuery === rawQuery) return null;
+
+  return `${candidate.slice(0, queryStartIndex)}${decodedQuery}${candidate.slice(queryEndIndex)}`;
+}
+
+function normalizeHtmlUrl(rawValue: string): string | null {
+  const trimmedCandidate = rawValue.trim();
+  if (trimmedCandidate === "") return null;
+  const normalizedCandidate = normalizeSinglePassHtmlUrlArtifacts(trimmedCandidate);
+  if (hasUnresolvedEscapeArtifacts(normalizedCandidate)) return null;
+
+  const decodedRetryCandidate = decodeRetryForPercentEscapes(normalizedCandidate);
+  if (decodedRetryCandidate === null) {
+    return parseAndValidatePublicGoogleMapsUrl(normalizedCandidate);
+  }
+  if (hasUnresolvedEscapeArtifacts(decodedRetryCandidate)) return null;
+
+  return parseAndValidatePublicGoogleMapsUrl(
+    recoverPercentEncodedQuerySeparators(decodedRetryCandidate),
+  );
 }
 
 export function extractEmbeddedGoogleMapsUrls(html: string): readonly string[] {

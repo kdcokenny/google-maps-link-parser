@@ -123,6 +123,144 @@ describe("resolveGoogleMapsUrl", () => {
     expect(result.raw?.html?.extractedUrls).toContain(placePathHandoffUrl);
   });
 
+  test("normalizes escaped separator artifacts in desktop handoff URLs", async () => {
+    const normalizedHandoffUrl =
+      "https://www.google.com/maps/place/Test?entry=ttu&q=24.7136,46.6753&ftid=0x123:0x456";
+    const escapedHandoffUrl =
+      "https://www.google.com/maps/place/Test?entry\\u003dttu\\u0026q\\u003d24.7136,46.6753\\u0026ftid\\u003d0x123:0x456";
+    const mock = createRedirectFetch([
+      { status: 200 },
+      {
+        status: 200,
+        body: `<div data-desktop-link="${escapedHandoffUrl}"></div>`,
+      },
+    ]);
+
+    const result = await resolveGoogleMapsUrl(SHORTLINKS.mapsApp, {
+      fetch: mock.fetch,
+      raw: { enabled: true },
+    });
+
+    expect(result.resolvedUrl).toBe(normalizedHandoffUrl);
+    expect(result.usedHtmlFallback).toBe(true);
+    expect(result.raw?.html?.extractedUrls).toContain(normalizedHandoffUrl);
+  });
+
+  test("normalizes \\u0026amp; artifacts in desktop handoff URLs", async () => {
+    const normalizedHandoffUrl =
+      "https://www.google.com/maps/place/Test?entry=ttu&q=24.7136,46.6753&ftid=0x123:0x456";
+    const escapedAmpHandoffUrl =
+      "https://www.google.com/maps/place/Test?entry\\u003dttu\\u0026amp;q\\u003d24.7136,46.6753\\u0026amp;ftid\\u003d0x123:0x456";
+    const mock = createRedirectFetch([
+      { status: 200 },
+      {
+        status: 200,
+        body: `<div data-desktop-link="${escapedAmpHandoffUrl}"></div>`,
+      },
+    ]);
+
+    const result = await resolveGoogleMapsUrl(SHORTLINKS.mapsApp, {
+      fetch: mock.fetch,
+      raw: { enabled: true },
+    });
+
+    expect(result.resolvedUrl).toBe(normalizedHandoffUrl);
+    expect(result.usedHtmlFallback).toBe(true);
+    expect(result.raw?.html?.extractedUrls).toContain(normalizedHandoffUrl);
+  });
+
+  test("recovers one layer of %25-encoded separators for safe query keys", async () => {
+    const normalizedHandoffUrl =
+      "https://www.google.com/maps/place/Test?entry=ttu&ll=24.7136,46.6753&ftid=0x123:0x456";
+    const percentEncodedHandoffUrl =
+      "https://www.google.com/maps/place/Test?entry%253Dttu%2526ll%253D24.7136,46.6753%2526ftid%253D0x123:0x456";
+    const mock = createRedirectFetch([
+      { status: 200 },
+      {
+        status: 200,
+        body: `<div data-desktop-link="${percentEncodedHandoffUrl}"></div>`,
+      },
+    ]);
+
+    const result = await resolveGoogleMapsUrl(SHORTLINKS.mapsApp, {
+      fetch: mock.fetch,
+      raw: { enabled: true },
+    });
+
+    expect(result.resolvedUrl).toBe(normalizedHandoffUrl);
+    expect(result.usedHtmlFallback).toBe(true);
+    expect(result.raw?.html?.extractedUrls).toContain(normalizedHandoffUrl);
+  });
+
+  test("does not over-decode unrelated one-level escapes during %25 recovery", async () => {
+    const preservedValueHandoffUrl =
+      "https://www.google.com/maps/place/Test?entry=ttu&ll=24.7136,46.6753&query=AT%252F%2523%253F";
+    const encodedValueHandoffUrl =
+      "https://www.google.com/maps/place/Test?entry%253Dttu%2526ll%253D24.7136,46.6753&query=AT%252F%2523%253F";
+    const mock = createRedirectFetch([
+      { status: 200 },
+      {
+        status: 200,
+        body: `<div data-desktop-link="${encodedValueHandoffUrl}"></div>`,
+      },
+    ]);
+
+    const result = await resolveGoogleMapsUrl(SHORTLINKS.mapsApp, {
+      fetch: mock.fetch,
+      raw: { enabled: true },
+    });
+
+    expect(result.resolvedUrl).toBe(preservedValueHandoffUrl);
+    expect(result.usedHtmlFallback).toBe(true);
+    expect(result.raw?.html?.extractedUrls).toContain(preservedValueHandoffUrl);
+  });
+
+  test("does not split ambiguous text-like encoded key-value shapes", async () => {
+    const preservedAmbiguousHandoffUrl =
+      "https://www.google.com/maps/place/Test?q%3Dfoo%26destination%3Dbar";
+    const encodedAmbiguousHandoffUrl =
+      "https://www.google.com/maps/place/Test?q%253Dfoo%2526destination%253Dbar";
+    const mock = createRedirectFetch([
+      { status: 200 },
+      {
+        status: 200,
+        body: `<div data-desktop-link="${encodedAmbiguousHandoffUrl}"></div>`,
+      },
+    ]);
+
+    const result = await resolveGoogleMapsUrl(SHORTLINKS.mapsApp, {
+      fetch: mock.fetch,
+      raw: { enabled: true },
+    });
+
+    expect(result.resolvedUrl).toBe(preservedAmbiguousHandoffUrl);
+    expect(result.usedHtmlFallback).toBe(true);
+    expect(result.raw?.html?.extractedUrls).toContain(preservedAmbiguousHandoffUrl);
+  });
+
+  test("normalizes escaped separators in embedded Google Maps URLs", async () => {
+    const normalizedEmbeddedUrl =
+      "https://www.google.com/maps/place/Test?entry=ttu&q=24.7136,46.6753&ftid=0xabc:0xdef";
+    const escapedEmbeddedUrl =
+      "https://www.google.com/maps/place/Test?entry\\u003dttu/u0026amp;q\\u003d24.7136,46.6753/u0026ftid\\u003d0xabc:0xdef";
+    const mock = createRedirectFetch([
+      { status: 200 },
+      {
+        status: 200,
+        body: `<html><body><script>window.__maps='${escapedEmbeddedUrl}'</script></body></html>`,
+      },
+    ]);
+
+    const result = await resolveGoogleMapsUrl(SHORTLINKS.mapsApp, {
+      fetch: mock.fetch,
+      raw: { enabled: true },
+    });
+
+    expect(result.resolvedUrl).toBe(normalizedEmbeddedUrl);
+    expect(result.usedHtmlFallback).toBe(true);
+    expect(result.raw?.html?.extractedUrls).toContain(normalizedEmbeddedUrl);
+  });
+
   test("recursively re-follows shortlink handoffs discovered in HTML shells", async () => {
     const shortLinkHandoff = "https://maps.app.goo.gl/handoff123?_imcp=1";
     const finalPlacePathUrl =
@@ -202,6 +340,31 @@ describe("resolveGoogleMapsUrl", () => {
       // eslint-disable-next-line no-await-in-loop -- Each handoff case uses isolated mock state.
       const result = await resolveGoogleMapsUrl(SHORTLINKS.mapsApp, {
         fetch: mock.fetch,
+      });
+
+      expect(result.resolvedUrl).toBe("https://maps.app.goo.gl/abc123");
+    }
+  });
+
+  test("fails closed for malformed or over-decoded HTML handoff artifacts", async () => {
+    for (const handoff of [
+      "https://www.google.com/maps/place/Test\\u00ZZ?q=24.7136,46.6753",
+      "javascript\\u003aalert(1)",
+      "https://evil.com/maps/place/Test?entry\\u003dttu\\u0026q\\u003d24.7136,46.6753",
+      "https%25253A%25252F%25252Fwww.google.com%25252Fmaps%25252Fplace%25252FTest%25253Fq%25253D24.7136%25252C46.6753",
+    ]) {
+      const mock = createRedirectFetch([
+        { status: 200 },
+        {
+          status: 200,
+          body: `<html><body><div data-desktop-link="${handoff}"></div></body></html>`,
+        },
+      ]);
+
+      // eslint-disable-next-line no-await-in-loop -- Each handoff case uses isolated mock state.
+      const result = await resolveGoogleMapsUrl(SHORTLINKS.mapsApp, {
+        fetch: mock.fetch,
+        raw: { enabled: true },
       });
 
       expect(result.resolvedUrl).toBe("https://maps.app.goo.gl/abc123");
