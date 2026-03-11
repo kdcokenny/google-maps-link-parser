@@ -5,6 +5,10 @@ import {
   isShortLinkDomain,
 } from "./domain";
 import {
+  projectParsedCandidateBoundary,
+  selectParsedCandidateText,
+} from "./enrichment-contract";
+import {
   DisallowedHostnameError,
   EmptyInputError,
   InvalidGoogleMapsUrlError,
@@ -414,13 +418,13 @@ export function extractQueryText(rawUrl: string): string | null {
 }
 
 export function extractGeocodeText(rawUrl: string): string | null {
-  const queryText = extractQueryText(rawUrl);
-  if (queryText !== null) return queryText;
+  const projection = projectParsedCandidateBoundary({
+    envelope: parseGoogleMapsUrl(rawUrl),
+    source: "input",
+  });
+  if (projection.kind === "rejected") return null;
 
-  const parsedUrl = safeParseUrl(rawUrl);
-  if (parsedUrl === null) return null;
-
-  return extractPlacePathText(parsedUrl);
+  return selectParsedCandidateText(projection.candidate)?.text ?? null;
 }
 
 function toErrorEnvelope(

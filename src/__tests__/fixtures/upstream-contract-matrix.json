@@ -1,0 +1,940 @@
+{
+  "version": "upstream-baseline-v1",
+  "capturedAt": "2026-03-10",
+  "purpose": "Freeze current upstream package contract before migration behavior changes.",
+  "projectionPolicy": "intentional-partial",
+  "projectionNotes": "Baseline assertions intentionally project only public contract fields; parsedCandidate.source is tracked as operator context while parsedCandidate.url is assertion-critical.",
+  "cases": [
+    {
+      "id": "parse-at-pattern-coordinates",
+      "surface": "parse",
+      "inputUrl": "https://www.google.com/maps/@24.7136,46.6753,15z",
+      "upstreamAnchors": [
+        "parser.test.ts::extracts coordinates from direct @ URLs",
+        "fixtures.ts::STABLE_COORDINATE_URLS.atPattern"
+      ],
+      "parsedCandidate": {
+        "source": "input",
+        "url": "https://www.google.com/maps/@24.7136,46.6753,15z"
+      },
+      "rawEnabled": true,
+      "expected": {
+        "status": "ok",
+        "mode": "minimal",
+        "intent": "coordinates",
+        "errorCode": null,
+        "inputNormalized": "https://www.google.com/maps/@24.7136,46.6753,15z",
+        "inputCanonicalized": null,
+        "resolutionStatus": "not-needed",
+        "resolvedUrl": null,
+        "parsedCandidateUrl": "https://www.google.com/maps/@24.7136,46.6753,15z",
+        "location": {
+          "latitude": 24.7136,
+          "longitude": 46.6753,
+          "source": "at-pattern",
+          "accuracy": "exact"
+        },
+        "query": null,
+        "place": null,
+        "route": null,
+        "parseMatchedPattern": "at-pattern",
+        "parseDetectedPatterns": ["at-pattern"],
+        "rawProviderStatuses": {
+          "geocoding": null,
+          "reverseGeocoding": null,
+          "places": null,
+          "directions": null,
+          "providerErrors": []
+        }
+      },
+      "expectedDiagnostics": [],
+      "expectedProviderCalls": {
+        "geocoding": 0,
+        "reverseGeocoding": 0,
+        "places": 0,
+        "directions": 0,
+        "total": 0
+      },
+      "semverImpact": "major-breaking"
+    },
+    {
+      "id": "parse-query-text-search",
+      "surface": "parse",
+      "inputUrl": "https://www.google.com/maps?q=Malaz+Riyadh",
+      "upstreamAnchors": [
+        "parser.test.ts::extracts human query text instead of treating it as coordinates",
+        "fixtures.ts::TEXT_URLS.queryText"
+      ],
+      "parsedCandidate": {
+        "source": "input",
+        "url": "https://www.google.com/maps?q=Malaz+Riyadh"
+      },
+      "rawEnabled": true,
+      "expected": {
+        "status": "ok",
+        "mode": "minimal",
+        "intent": "search",
+        "errorCode": null,
+        "inputNormalized": "https://www.google.com/maps?q=Malaz+Riyadh",
+        "inputCanonicalized": null,
+        "resolutionStatus": "not-needed",
+        "resolvedUrl": null,
+        "parsedCandidateUrl": "https://www.google.com/maps?q=Malaz+Riyadh",
+        "location": null,
+        "query": {
+          "text": "Malaz Riyadh",
+          "source": "q-param",
+          "isCoordinateQuery": false,
+          "mapAction": null
+        },
+        "place": null,
+        "route": null,
+        "parseMatchedPattern": null,
+        "parseDetectedPatterns": [],
+        "rawProviderStatuses": {
+          "geocoding": null,
+          "reverseGeocoding": null,
+          "places": null,
+          "directions": null,
+          "providerErrors": []
+        }
+      },
+      "expectedDiagnostics": [],
+      "expectedProviderCalls": {
+        "geocoding": 0,
+        "reverseGeocoding": 0,
+        "places": 0,
+        "directions": 0,
+        "total": 0
+      },
+      "semverImpact": "major-breaking"
+    },
+    {
+      "id": "parse-place-path-title-and-feature-id",
+      "surface": "parse",
+      "inputUrl": "https://www.google.com/maps/place/%D8%AD%D9%8A+%D8%A7%D9%84%D9%85%D9%84%D8%A7%D8%B2/data=!4m2!3m1!1s0x123:0x456",
+      "upstreamAnchors": [
+        "parser.test.ts::extracts decoded place-path text for geocoding fallback",
+        "fixtures.ts::TEXT_URLS.placePathText"
+      ],
+      "parsedCandidate": {
+        "source": "input",
+        "url": "https://www.google.com/maps/place/%D8%AD%D9%8A+%D8%A7%D9%84%D9%85%D9%84%D8%A7%D8%B2/data=!4m2!3m1!1s0x123:0x456"
+      },
+      "rawEnabled": true,
+      "expected": {
+        "status": "ok",
+        "mode": "minimal",
+        "intent": "place",
+        "errorCode": null,
+        "inputNormalized": "https://www.google.com/maps/place/%D8%AD%D9%8A+%D8%A7%D9%84%D9%85%D9%84%D8%A7%D8%B2/data=!4m2!3m1!1s0x123:0x456",
+        "inputCanonicalized": null,
+        "resolutionStatus": "not-needed",
+        "resolvedUrl": null,
+        "parsedCandidateUrl": "https://www.google.com/maps/place/%D8%AD%D9%8A+%D8%A7%D9%84%D9%85%D9%84%D8%A7%D8%B2/data=!4m2!3m1!1s0x123:0x456",
+        "location": null,
+        "query": null,
+        "place": {
+          "title": "حي الملاز",
+          "formattedAddress": null,
+          "featureId": "0x123:0x456",
+          "placeId": null,
+          "district": null,
+          "city": null,
+          "country": null
+        },
+        "route": null,
+        "parseMatchedPattern": null,
+        "parseDetectedPatterns": [],
+        "rawProviderStatuses": {
+          "geocoding": null,
+          "reverseGeocoding": null,
+          "places": null,
+          "directions": null,
+          "providerErrors": []
+        }
+      },
+      "expectedDiagnostics": [],
+      "expectedProviderCalls": {
+        "geocoding": 0,
+        "reverseGeocoding": 0,
+        "places": 0,
+        "directions": 0,
+        "total": 0
+      },
+      "semverImpact": "major-breaking"
+    },
+    {
+      "id": "parse-unsupported-share-google-shortlink",
+      "surface": "parse",
+      "inputUrl": "https://share.google/FGT36rRoOI3ukfIad",
+      "upstreamAnchors": [
+        "parser.test.ts::returns a safe error envelope for unsupported share.google URLs",
+        "fixtures.ts::SHORTLINKS.unsupported"
+      ],
+      "parsedCandidate": {
+        "source": "input",
+        "url": "https://share.google/FGT36rRoOI3ukfIad"
+      },
+      "rawEnabled": true,
+      "expected": {
+        "status": "error",
+        "mode": "minimal",
+        "intent": "unknown",
+        "errorCode": "unsupported_url",
+        "inputNormalized": "https://share.google/FGT36rRoOI3ukfIad",
+        "inputCanonicalized": null,
+        "resolutionStatus": "not-attempted",
+        "resolvedUrl": null,
+        "parsedCandidateUrl": "https://share.google/FGT36rRoOI3ukfIad",
+        "location": null,
+        "query": null,
+        "place": null,
+        "route": null,
+        "parseMatchedPattern": null,
+        "parseDetectedPatterns": [],
+        "rawProviderStatuses": {
+          "geocoding": null,
+          "reverseGeocoding": null,
+          "places": null,
+          "directions": null,
+          "providerErrors": []
+        }
+      },
+      "expectedDiagnostics": [],
+      "expectedProviderCalls": {
+        "geocoding": 0,
+        "reverseGeocoding": 0,
+        "places": 0,
+        "directions": 0,
+        "total": 0
+      },
+      "semverImpact": "major-breaking"
+    },
+    {
+      "id": "unfurl-shortlink-resolves-to-direct-coordinates",
+      "surface": "unfurl",
+      "inputUrl": "https://maps.app.goo.gl/abc123?g_st=ic",
+      "upstreamAnchors": [
+        "unfurl.test.ts::returns an unfurled envelope for shortlinks",
+        "unfurl.test.ts::follows a shortlink redirect chain without overfetching when direct coords appear",
+        "fixtures.ts::SHORTLINKS.mapsApp"
+      ],
+      "parsedCandidate": {
+        "source": "resolved-url",
+        "url": "https://www.google.com/maps/@24.7136,46.6753,15z"
+      },
+      "rawEnabled": true,
+      "resolutionMockSteps": [
+        {
+          "status": 302,
+          "location": "https://www.google.com/maps/@24.7136,46.6753,15z"
+        },
+        {
+          "status": 200
+        }
+      ],
+      "expected": {
+        "status": "ok",
+        "mode": "unfurl",
+        "intent": "coordinates",
+        "errorCode": null,
+        "inputNormalized": "https://maps.app.goo.gl/abc123",
+        "inputCanonicalized": "https://maps.app.goo.gl/abc123",
+        "resolutionStatus": "resolved",
+        "resolvedUrl": "https://www.google.com/maps/@24.7136,46.6753,15z",
+        "parsedCandidateUrl": "https://www.google.com/maps/@24.7136,46.6753,15z",
+        "location": {
+          "latitude": 24.7136,
+          "longitude": 46.6753,
+          "source": "at-pattern",
+          "accuracy": "exact"
+        },
+        "query": null,
+        "place": null,
+        "route": null,
+        "parseMatchedPattern": "at-pattern",
+        "parseDetectedPatterns": ["at-pattern"],
+        "rawProviderStatuses": {
+          "geocoding": null,
+          "reverseGeocoding": null,
+          "places": null,
+          "directions": null,
+          "providerErrors": []
+        }
+      },
+      "expectedDiagnostics": ["resolved_url_changed"],
+      "expectedProviderCalls": {
+        "geocoding": 0,
+        "reverseGeocoding": 0,
+        "places": 0,
+        "directions": 0,
+        "total": 0
+      },
+      "semverImpact": "major-breaking"
+    },
+    {
+      "id": "unfurl-dead-shortlink-diagnostic",
+      "surface": "unfurl",
+      "inputUrl": "https://goo.gl/maps/legacy123",
+      "upstreamAnchors": [
+        "unfurl.test.ts::marks dead shortlinks without crashing",
+        "fixtures.ts::SHORTLINKS.gooLegacy"
+      ],
+      "parsedCandidate": {
+        "source": "resolved-url",
+        "url": "https://goo.gl/maps/legacy123"
+      },
+      "rawEnabled": true,
+      "resolutionMockSteps": [
+        {
+          "status": 404
+        }
+      ],
+      "expected": {
+        "status": "ok",
+        "mode": "unfurl",
+        "intent": "unknown",
+        "errorCode": null,
+        "inputNormalized": "https://goo.gl/maps/legacy123",
+        "inputCanonicalized": null,
+        "resolutionStatus": "dead-end",
+        "resolvedUrl": "https://goo.gl/maps/legacy123",
+        "parsedCandidateUrl": "https://goo.gl/maps/legacy123",
+        "location": null,
+        "query": null,
+        "place": null,
+        "route": null,
+        "parseMatchedPattern": null,
+        "parseDetectedPatterns": [],
+        "rawProviderStatuses": {
+          "geocoding": null,
+          "reverseGeocoding": null,
+          "places": null,
+          "directions": null,
+          "providerErrors": []
+        }
+      },
+      "expectedDiagnostics": ["dead_shortlink"],
+      "expectedProviderCalls": {
+        "geocoding": 0,
+        "reverseGeocoding": 0,
+        "places": 0,
+        "directions": 0,
+        "total": 0
+      },
+      "semverImpact": "major-breaking"
+    },
+    {
+      "id": "unfurl-disallowed-redirect-hop-errors-safe",
+      "surface": "unfurl",
+      "inputUrl": "https://maps.app.goo.gl/abc123?g_st=ic",
+      "upstreamAnchors": [
+        "unfurl.test.ts::returns a safe error envelope for disallowed redirect hops",
+        "unfurl.test.ts::throw variant throws for disallowed redirect hops"
+      ],
+      "parsedCandidate": {
+        "source": "input",
+        "url": "https://maps.app.goo.gl/abc123?g_st=ic"
+      },
+      "rawEnabled": true,
+      "resolutionMockSteps": [
+        {
+          "status": 302,
+          "location": "https://evil.com/steal-data"
+        }
+      ],
+      "expected": {
+        "status": "error",
+        "mode": "unfurl",
+        "intent": "unknown",
+        "errorCode": "disallowed_hostname",
+        "inputNormalized": "https://maps.app.goo.gl/abc123?g_st=ic",
+        "inputCanonicalized": null,
+        "resolutionStatus": "not-attempted",
+        "resolvedUrl": null,
+        "parsedCandidateUrl": "https://maps.app.goo.gl/abc123?g_st=ic",
+        "location": null,
+        "query": null,
+        "place": null,
+        "route": null,
+        "parseMatchedPattern": null,
+        "parseDetectedPatterns": [],
+        "rawProviderStatuses": {
+          "geocoding": null,
+          "reverseGeocoding": null,
+          "places": null,
+          "directions": null,
+          "providerErrors": []
+        }
+      },
+      "expectedDiagnostics": [],
+      "expectedProviderCalls": {
+        "geocoding": 0,
+        "reverseGeocoding": 0,
+        "places": 0,
+        "directions": 0,
+        "total": 0
+      },
+      "semverImpact": "major-breaking"
+    },
+    {
+      "id": "analyze-enriched-without-provider-config",
+      "surface": "analyze",
+      "inputUrl": "https://www.google.com/maps?q=Malaz+Riyadh",
+      "upstreamAnchors": [
+        "analyze.test.ts::enriched mode without provider config stays safe and loud"
+      ],
+      "parsedCandidate": {
+        "source": "input",
+        "url": "https://www.google.com/maps?q=Malaz+Riyadh"
+      },
+      "rawEnabled": false,
+      "expected": {
+        "status": "ok",
+        "mode": "enriched",
+        "intent": "search",
+        "errorCode": null,
+        "inputNormalized": "https://www.google.com/maps?q=Malaz+Riyadh",
+        "inputCanonicalized": null,
+        "resolutionStatus": "not-needed",
+        "resolvedUrl": "https://www.google.com/maps?q=Malaz+Riyadh",
+        "parsedCandidateUrl": "https://www.google.com/maps?q=Malaz+Riyadh",
+        "location": null,
+        "query": {
+          "text": "Malaz Riyadh",
+          "source": "q-param",
+          "isCoordinateQuery": false,
+          "mapAction": null
+        },
+        "place": null,
+        "route": null,
+        "parseMatchedPattern": null,
+        "parseDetectedPatterns": [],
+        "rawProviderStatuses": {
+          "geocoding": null,
+          "reverseGeocoding": null,
+          "places": null,
+          "directions": null,
+          "providerErrors": []
+        }
+      },
+      "expectedDiagnostics": ["enrichment_not_configured"],
+      "expectedProviderCalls": {
+        "geocoding": 0,
+        "reverseGeocoding": 0,
+        "places": 0,
+        "directions": 0,
+        "total": 0
+      },
+      "semverImpact": "major-breaking"
+    },
+    {
+      "id": "analyze-enriched-geocodes-query-text",
+      "surface": "analyze",
+      "inputUrl": "https://www.google.com/maps?q=Malaz+Riyadh",
+      "upstreamAnchors": [
+        "analyze.test.ts::geocodes search text when location is missing"
+      ],
+      "parsedCandidate": {
+        "source": "input",
+        "url": "https://www.google.com/maps?q=Malaz+Riyadh"
+      },
+      "rawEnabled": true,
+      "providerMock": {
+        "responses": {
+          "geocoding": "GEOCODING_OK"
+        },
+        "options": {
+          "enableReverseGeocoding": false,
+          "enablePlaces": false,
+          "enableDirections": false
+        }
+      },
+      "expected": {
+        "status": "ok",
+        "mode": "enriched",
+        "intent": "search",
+        "errorCode": null,
+        "inputNormalized": "https://www.google.com/maps?q=Malaz+Riyadh",
+        "inputCanonicalized": null,
+        "resolutionStatus": "not-needed",
+        "resolvedUrl": "https://www.google.com/maps?q=Malaz+Riyadh",
+        "parsedCandidateUrl": "https://www.google.com/maps?q=Malaz+Riyadh",
+        "location": {
+          "latitude": 24.7136,
+          "longitude": 46.6753,
+          "source": "provider-geocoding",
+          "accuracy": "approximate"
+        },
+        "query": {
+          "text": "Malaz Riyadh",
+          "source": "q-param",
+          "isCoordinateQuery": false,
+          "mapAction": null
+        },
+        "place": {
+          "title": "Malaz Riyadh",
+          "formattedAddress": "Malaz, Riyadh Saudi Arabia",
+          "featureId": null,
+          "placeId": "place-123",
+          "district": "Malaz",
+          "city": "Riyadh",
+          "country": "Saudi Arabia"
+        },
+        "route": null,
+        "parseMatchedPattern": null,
+        "parseDetectedPatterns": [],
+        "rawProviderStatuses": {
+          "geocoding": "OK",
+          "reverseGeocoding": null,
+          "places": null,
+          "directions": null,
+          "providerErrors": []
+        }
+      },
+      "expectedDiagnostics": [],
+      "expectedProviderCalls": {
+        "geocoding": 1,
+        "reverseGeocoding": 0,
+        "places": 0,
+        "directions": 0,
+        "total": 1
+      },
+      "semverImpact": "major-breaking"
+    },
+    {
+      "id": "analyze-enriched-places-success",
+      "surface": "analyze",
+      "inputUrl": "https://www.google.com/maps?q=Malaz+Riyadh",
+      "upstreamAnchors": [
+        "analyze.test.ts::fills place data when places enrichment is enabled",
+        "fixtures.ts::PLACES_OK"
+      ],
+      "parsedCandidate": {
+        "source": "input",
+        "url": "https://www.google.com/maps?q=Malaz+Riyadh"
+      },
+      "rawEnabled": true,
+      "providerMock": {
+        "responses": {
+          "places": "PLACES_OK"
+        },
+        "options": {
+          "enableGeocoding": false,
+          "enableReverseGeocoding": false,
+          "enablePlaces": true,
+          "enableDirections": false
+        }
+      },
+      "expected": {
+        "status": "ok",
+        "mode": "enriched",
+        "intent": "search",
+        "errorCode": null,
+        "inputNormalized": "https://www.google.com/maps?q=Malaz+Riyadh",
+        "inputCanonicalized": null,
+        "resolutionStatus": "not-needed",
+        "resolvedUrl": "https://www.google.com/maps?q=Malaz+Riyadh",
+        "parsedCandidateUrl": "https://www.google.com/maps?q=Malaz+Riyadh",
+        "location": {
+          "latitude": 24.7141,
+          "longitude": 46.6762,
+          "source": "provider-places",
+          "accuracy": "exact"
+        },
+        "query": {
+          "text": "Malaz Riyadh",
+          "source": "q-param",
+          "isCoordinateQuery": false,
+          "mapAction": null
+        },
+        "place": {
+          "title": "Malaz Plaza",
+          "formattedAddress": "Malaz Plaza, Riyadh Saudi Arabia",
+          "featureId": null,
+          "placeId": "places-123",
+          "district": null,
+          "city": null,
+          "country": null
+        },
+        "route": null,
+        "parseMatchedPattern": null,
+        "parseDetectedPatterns": [],
+        "rawProviderStatuses": {
+          "geocoding": null,
+          "reverseGeocoding": null,
+          "places": "OK",
+          "directions": null,
+          "providerErrors": []
+        }
+      },
+      "expectedDiagnostics": [],
+      "expectedContractLocks": {
+        "identifiers": {
+          "placeId": "places-123",
+          "plusCode": {
+            "globalCode": "7HVGPR8G+CM",
+            "compoundCode": "PR8G+CM Riyadh"
+          }
+        },
+        "place": {
+          "types": ["point_of_interest"],
+          "plusCode": {
+            "globalCode": "7HVGPR8G+CM",
+            "compoundCode": "PR8G+CM Riyadh"
+          }
+        }
+      },
+      "expectedProviderCalls": {
+        "geocoding": 0,
+        "reverseGeocoding": 0,
+        "places": 1,
+        "directions": 0,
+        "total": 1
+      },
+      "semverImpact": "major-breaking"
+    },
+    {
+      "id": "analyze-enriched-places-denied",
+      "surface": "analyze",
+      "inputUrl": "https://www.google.com/maps?q=Malaz+Riyadh",
+      "upstreamAnchors": [
+        "analyze.test.ts::captures places denied responses without crashing",
+        "fixtures.ts::PROVIDER_DENIED"
+      ],
+      "parsedCandidate": {
+        "source": "input",
+        "url": "https://www.google.com/maps?q=Malaz+Riyadh"
+      },
+      "rawEnabled": true,
+      "providerMock": {
+        "responses": {
+          "places": "PROVIDER_DENIED"
+        },
+        "options": {
+          "enableGeocoding": false,
+          "enableReverseGeocoding": false,
+          "enablePlaces": true,
+          "enableDirections": false
+        }
+      },
+      "expected": {
+        "status": "ok",
+        "mode": "enriched",
+        "intent": "search",
+        "errorCode": null,
+        "inputNormalized": "https://www.google.com/maps?q=Malaz+Riyadh",
+        "inputCanonicalized": null,
+        "resolutionStatus": "not-needed",
+        "resolvedUrl": "https://www.google.com/maps?q=Malaz+Riyadh",
+        "parsedCandidateUrl": "https://www.google.com/maps?q=Malaz+Riyadh",
+        "location": null,
+        "query": {
+          "text": "Malaz Riyadh",
+          "source": "q-param",
+          "isCoordinateQuery": false,
+          "mapAction": null
+        },
+        "place": null,
+        "route": null,
+        "parseMatchedPattern": null,
+        "parseDetectedPatterns": [],
+        "rawProviderStatuses": {
+          "geocoding": null,
+          "reverseGeocoding": null,
+          "places": null,
+          "directions": null,
+          "providerErrors": ["places:REQUEST_DENIED"]
+        }
+      },
+      "expectedDiagnostics": ["places_denied"],
+      "expectedContractLocks": {
+        "identifiers": {
+          "placeId": null,
+          "plusCode": null
+        },
+        "place": {
+          "types": [],
+          "plusCode": null
+        },
+        "rawProviderErrors": [
+          {
+            "provider": "places",
+            "providerStatus": "REQUEST_DENIED",
+            "errorMessage": "API key is invalid",
+            "body": {
+              "status": "REQUEST_DENIED",
+              "error_message": "API key is invalid"
+            }
+          }
+        ]
+      },
+      "expectedProviderCalls": {
+        "geocoding": 0,
+        "reverseGeocoding": 0,
+        "places": 1,
+        "directions": 0,
+        "total": 1
+      },
+      "semverImpact": "major-breaking"
+    },
+    {
+      "id": "analyze-enriched-skips-provider-when-direct-coordinates-exist",
+      "surface": "analyze",
+      "inputUrl": "https://www.google.com/maps/@24.7136,46.6753,15z",
+      "upstreamAnchors": [
+        "analyze.test.ts::skips geocoding fallback when direct coordinates already exist"
+      ],
+      "parsedCandidate": {
+        "source": "input",
+        "url": "https://www.google.com/maps/@24.7136,46.6753,15z"
+      },
+      "rawEnabled": false,
+      "providerMock": {
+        "responses": {},
+        "options": {
+          "enableReverseGeocoding": false,
+          "enablePlaces": false,
+          "enableDirections": false
+        }
+      },
+      "expected": {
+        "status": "ok",
+        "mode": "enriched",
+        "intent": "coordinates",
+        "errorCode": null,
+        "inputNormalized": "https://www.google.com/maps/@24.7136,46.6753,15z",
+        "inputCanonicalized": null,
+        "resolutionStatus": "not-needed",
+        "resolvedUrl": "https://www.google.com/maps/@24.7136,46.6753,15z",
+        "parsedCandidateUrl": "https://www.google.com/maps/@24.7136,46.6753,15z",
+        "location": {
+          "latitude": 24.7136,
+          "longitude": 46.6753,
+          "source": "at-pattern",
+          "accuracy": "exact"
+        },
+        "query": null,
+        "place": null,
+        "route": null,
+        "parseMatchedPattern": null,
+        "parseDetectedPatterns": [],
+        "rawProviderStatuses": {
+          "geocoding": null,
+          "reverseGeocoding": null,
+          "places": null,
+          "directions": null,
+          "providerErrors": []
+        }
+      },
+      "expectedDiagnostics": [],
+      "expectedProviderCalls": {
+        "geocoding": 0,
+        "reverseGeocoding": 0,
+        "places": 0,
+        "directions": 0,
+        "total": 0
+      },
+      "semverImpact": "major-breaking"
+    },
+    {
+      "id": "analyze-enriched-provider-denied-diagnostic",
+      "surface": "analyze",
+      "inputUrl": "https://www.google.com/maps?q=Malaz+Riyadh",
+      "upstreamAnchors": [
+        "analyze.test.ts::captures provider denied responses without crashing",
+        "fixtures.ts::PROVIDER_DENIED"
+      ],
+      "parsedCandidate": {
+        "source": "input",
+        "url": "https://www.google.com/maps?q=Malaz+Riyadh"
+      },
+      "rawEnabled": true,
+      "providerMock": {
+        "responses": {
+          "geocoding": "PROVIDER_DENIED"
+        },
+        "options": {
+          "enableReverseGeocoding": false,
+          "enablePlaces": false,
+          "enableDirections": false
+        }
+      },
+      "expected": {
+        "status": "ok",
+        "mode": "enriched",
+        "intent": "search",
+        "errorCode": null,
+        "inputNormalized": "https://www.google.com/maps?q=Malaz+Riyadh",
+        "inputCanonicalized": null,
+        "resolutionStatus": "not-needed",
+        "resolvedUrl": "https://www.google.com/maps?q=Malaz+Riyadh",
+        "parsedCandidateUrl": "https://www.google.com/maps?q=Malaz+Riyadh",
+        "location": null,
+        "query": {
+          "text": "Malaz Riyadh",
+          "source": "q-param",
+          "isCoordinateQuery": false,
+          "mapAction": null
+        },
+        "place": null,
+        "route": null,
+        "parseMatchedPattern": null,
+        "parseDetectedPatterns": [],
+        "rawProviderStatuses": {
+          "geocoding": null,
+          "reverseGeocoding": null,
+          "places": null,
+          "directions": null,
+          "providerErrors": ["geocoding:REQUEST_DENIED"]
+        }
+      },
+      "expectedDiagnostics": ["geocoding_denied"],
+      "expectedProviderCalls": {
+        "geocoding": 1,
+        "reverseGeocoding": 0,
+        "places": 0,
+        "directions": 0,
+        "total": 1
+      },
+      "semverImpact": "major-breaking"
+    },
+    {
+      "id": "analyze-enriched-directions-provider-fill",
+      "surface": "analyze",
+      "inputUrl": "https://www.google.com/maps/dir/Riyadh/Diriyah?travelmode=driving",
+      "upstreamAnchors": [
+        "analyze.test.ts::fills directions data when directions enrichment is enabled",
+        "fixtures.ts::DIRECTIONS_OK"
+      ],
+      "parsedCandidate": {
+        "source": "input",
+        "url": "https://www.google.com/maps/dir/Riyadh/Diriyah?travelmode=driving"
+      },
+      "rawEnabled": true,
+      "providerMock": {
+        "responses": {
+          "directions": "DIRECTIONS_OK"
+        },
+        "options": {
+          "enableGeocoding": false,
+          "enableReverseGeocoding": false,
+          "enablePlaces": false,
+          "enableDirections": true
+        }
+      },
+      "expected": {
+        "status": "ok",
+        "mode": "enriched",
+        "intent": "directions",
+        "errorCode": null,
+        "inputNormalized": "https://www.google.com/maps/dir/Riyadh/Diriyah?travelmode=driving",
+        "inputCanonicalized": null,
+        "resolutionStatus": "not-needed",
+        "resolvedUrl": "https://www.google.com/maps/dir/Riyadh/Diriyah?travelmode=driving",
+        "parsedCandidateUrl": "https://www.google.com/maps/dir/Riyadh/Diriyah?travelmode=driving",
+        "location": null,
+        "query": null,
+        "place": null,
+        "route": {
+          "originText": "Riyadh",
+          "destinationText": "Diriyah",
+          "travelMode": "driving",
+          "distanceMeters": 12000,
+          "durationSeconds": 900,
+          "polyline": "encoded-polyline"
+        },
+        "parseMatchedPattern": null,
+        "parseDetectedPatterns": [],
+        "rawProviderStatuses": {
+          "geocoding": null,
+          "reverseGeocoding": null,
+          "places": null,
+          "directions": "OK",
+          "providerErrors": []
+        }
+      },
+      "expectedDiagnostics": [],
+      "expectedProviderCalls": {
+        "geocoding": 0,
+        "reverseGeocoding": 0,
+        "places": 0,
+        "directions": 1,
+        "total": 1
+      },
+      "semverImpact": "major-breaking"
+    },
+    {
+      "id": "enrich-reverse-geocodes-existing-coordinate-envelope",
+      "surface": "enrich",
+      "inputUrl": "https://www.google.com/maps/@24.7136,46.6753,15z",
+      "upstreamAnchors": [
+        "analyze.test.ts::reverse geocodes an existing coordinate result when address fields are missing",
+        "fixtures.ts::GEOCODING_OK"
+      ],
+      "parsedCandidate": {
+        "source": "input",
+        "url": "https://www.google.com/maps/@24.7136,46.6753,15z"
+      },
+      "rawEnabled": true,
+      "providerMock": {
+        "responses": {
+          "reverseGeocoding": "GEOCODING_OK"
+        },
+        "options": {
+          "enableGeocoding": false,
+          "enableReverseGeocoding": true,
+          "enablePlaces": false,
+          "enableDirections": false
+        }
+      },
+      "expected": {
+        "status": "ok",
+        "mode": "enriched",
+        "intent": "coordinates",
+        "errorCode": null,
+        "inputNormalized": "https://www.google.com/maps/@24.7136,46.6753,15z",
+        "inputCanonicalized": null,
+        "resolutionStatus": "not-needed",
+        "resolvedUrl": null,
+        "parsedCandidateUrl": "https://www.google.com/maps/@24.7136,46.6753,15z",
+        "location": {
+          "latitude": 24.7136,
+          "longitude": 46.6753,
+          "source": "at-pattern",
+          "accuracy": "exact"
+        },
+        "query": null,
+        "place": {
+          "title": null,
+          "formattedAddress": "Malaz, Riyadh Saudi Arabia",
+          "featureId": null,
+          "placeId": "place-123",
+          "district": "Malaz",
+          "city": "Riyadh",
+          "country": "Saudi Arabia"
+        },
+        "route": null,
+        "parseMatchedPattern": "at-pattern",
+        "parseDetectedPatterns": ["at-pattern"],
+        "rawProviderStatuses": {
+          "geocoding": null,
+          "reverseGeocoding": "OK",
+          "places": null,
+          "directions": null,
+          "providerErrors": []
+        }
+      },
+      "expectedDiagnostics": [],
+      "expectedProviderCalls": {
+        "geocoding": 0,
+        "reverseGeocoding": 1,
+        "places": 0,
+        "directions": 0,
+        "total": 1
+      },
+      "semverImpact": "major-breaking"
+    }
+  ]
+}

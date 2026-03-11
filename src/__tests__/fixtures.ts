@@ -49,6 +49,25 @@ export const GEOCODING_OK = {
   ],
 } as const;
 
+export const PLACES_OK = {
+  status: "OK",
+  candidates: [
+    {
+      place_id: "places-123",
+      name: "Malaz Plaza",
+      formatted_address: "Malaz Plaza, Riyadh Saudi Arabia",
+      types: ["point_of_interest"],
+      geometry: {
+        location: { lat: 24.7141, lng: 46.6762 },
+      },
+      plus_code: {
+        global_code: "7HVGPR8G+CM",
+        compound_code: "PR8G+CM Riyadh",
+      },
+    },
+  ],
+} as const;
+
 export const DIRECTIONS_OK = {
   status: "OK",
   routes: [

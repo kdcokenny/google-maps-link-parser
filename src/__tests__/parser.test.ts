@@ -46,12 +46,47 @@ describe("parseGoogleMapsUrl", () => {
     expect(result.location.value).toBeNull();
   });
 
+  test("keeps plain place-path text extraction unchanged", () => {
+    const plainPlacePathUrl = "https://www.google.com/maps/place/Riyadh";
+
+    expect(extractGeocodeText(plainPlacePathUrl)).toBe("Riyadh");
+    const result = parseGoogleMapsUrl(plainPlacePathUrl);
+    expect(result.intent).toBe("place");
+    expect(result.place.value?.title).toBe("Riyadh");
+  });
+
   test("extracts decoded place-path text for geocoding fallback", () => {
     expect(extractGeocodeText(TEXT_URLS.placePathText)).toBe("حي الملاز");
     const result = parseGoogleMapsUrl(TEXT_URLS.placePathText);
     expect(result.intent).toBe("place");
     expect(result.place.value?.title).toBe("حي الملاز");
     expect(result.identifiers.featureId).toBe("0x123:0x456");
+  });
+
+  test("keeps DMS place-path text extraction unchanged", () => {
+    const dmsPlacePathUrl =
+      "https://www.google.com/maps/place/24%C2%B042%2754.0%22N+46%C2%B040%2731.1%22E";
+
+    expect(extractGeocodeText(dmsPlacePathUrl)).toBe("24°42'54.0\"N 46°40'31.1\"E");
+    const result = parseGoogleMapsUrl(dmsPlacePathUrl);
+    expect(result.intent).toBe("place");
+    expect(result.place.value?.title).toBe("24°42'54.0\"N 46°40'31.1\"E");
+  });
+
+  test("rejects unusable data=! payloads as geocoding text candidates", () => {
+    expect(
+      extractGeocodeText("https://www.google.com/maps?q=data=!4m2!3m1!1s0x123:0x456"),
+    ).toBeNull();
+  });
+
+  test("rejects malformed decoded query text candidates", () => {
+    expect(extractGeocodeText("https://www.google.com/maps?q=%E0%A4%A")).toBeNull();
+  });
+
+  test("rejects FTID-only place-path candidates", () => {
+    expect(
+      extractGeocodeText("https://www.google.com/maps/place/0x123:0x456"),
+    ).toBeNull();
   });
 
   test("parses directions URLs into route data", () => {
@@ -144,5 +179,18 @@ describe("parseGoogleMapsUrl", () => {
     expect(
       extractFeatureId("https://www.google.com/maps/place/Test?ftid=0xabc:0xdef"),
     ).toBe("0xabc:0xdef");
+  });
+
+  test("documents out-of-scope: Plus Code restoration is not automatic", () => {
+    const result = parseGoogleMapsUrl("https://www.google.com/maps/place/Riyadh");
+
+    expect(result.identifiers.plusCode).toBeNull();
+  });
+
+  test("documents out-of-scope: unsupported share.google policy is unchanged", () => {
+    const result = parseGoogleMapsUrl(SHORTLINKS.unsupported);
+
+    expect(result.status).toBe("error");
+    expect(result.error?.code).toBe("unsupported_url");
   });
 });

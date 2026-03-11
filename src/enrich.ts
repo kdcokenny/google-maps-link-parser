@@ -1,3 +1,4 @@
+import { selectEnvelopeParsedCandidateText } from "./enrichment-contract";
 import { NetworkRequestError, NetworkTimeoutError } from "./errors";
 import { trimToNull } from "./guards";
 import { appendRawArtifacts, createSection, mergeDiagnostics } from "./normalize";
@@ -366,19 +367,20 @@ async function maybeGeocodeText(
   options: GoogleApiEnrichmentOptions,
   policy: EnrichmentPolicy,
 ): Promise<GoogleMapsEnvelope> {
+  if (envelope.location.value !== null) return envelope;
+
   const shouldRun = shouldRunByPolicy({
-    currentHasValue: envelope.location.value !== null,
+    currentHasValue: false,
     policy,
     explicitlyEnabled: options.enableGeocoding,
     defaultWhenNeeded: true,
   });
   if (!shouldRun) return envelope;
 
-  const textToGeocode =
-    trimToNull(envelope.query.value?.text) ??
-    trimToNull(envelope.place.value?.title) ??
-    trimToNull(envelope.place.value?.formattedAddress);
-  if (textToGeocode === null) return envelope;
+  const geocodeCandidate = selectEnvelopeParsedCandidateText({ envelope });
+  if (geocodeCandidate === null) return envelope;
+
+  const textToGeocode = geocodeCandidate.text;
 
   const url = new URL("https://maps.googleapis.com/maps/api/geocode/json");
   url.searchParams.set("address", textToGeocode);
@@ -553,7 +555,9 @@ async function maybeReverseGeocodeLocation(
     }
 
     const rawPatch = shouldCaptureRaw(envelope, "reverse-geocoding")
-      ? { reverseGeocoding: createProviderRawArtifact(url.toString(), outcome.body) }
+      ? {
+          reverseGeocoding: createProviderRawArtifact(url.toString(), outcome.body),
+        }
       : {};
 
     if (outcome.kind === "empty") {
