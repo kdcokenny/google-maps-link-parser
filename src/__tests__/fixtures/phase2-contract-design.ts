@@ -70,8 +70,8 @@ interface SemverGateContract {
   readonly gate: typeof ENRICHED_MODE_SEMVER_GATE;
   readonly releaseArtifactProof: {
     readonly packageName: "google-maps-link-parser";
-    readonly packageVersion: "0.1.1";
-    readonly expectedTarballFileName: "google-maps-link-parser-0.1.1.tgz";
+    readonly packageVersion: "0.1.2";
+    readonly expectedTarballFileName: "google-maps-link-parser-0.1.2.tgz";
     readonly proofCommand: "npm pack --json";
     readonly requiredPackFields: readonly ["filename", "integrity", "shasum"];
     readonly notes: string;
@@ -544,8 +544,8 @@ export const PHASE2_CONTRACT_DESIGN: Phase2ContractDesignArtifact = {
     gate: ENRICHED_MODE_SEMVER_GATE,
     releaseArtifactProof: {
       packageName: "google-maps-link-parser",
-      packageVersion: "0.1.1",
-      expectedTarballFileName: "google-maps-link-parser-0.1.1.tgz",
+      packageVersion: "0.1.2",
+      expectedTarballFileName: "google-maps-link-parser-0.1.2.tgz",
       proofCommand: "npm pack --json",
       requiredPackFields: ["filename", "integrity", "shasum"],
       notes:
