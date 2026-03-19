@@ -270,7 +270,7 @@ console.log(parseGoogleMapsUrl("https://share.google/example").error?.code); // 
 
 ## Documentation
 
-- Docs site: `https://google-maps-link-parser.mintlify.app`
+- Docs site: `https://gmlp.kdco.dev`
 - Local docs: `bun run docs:dev`
 
 ## Development
