@@ -298,6 +298,12 @@ describe("release-tag helper", () => {
     await gitOrThrow(repo.workDir, ["push", "origin", `refs/tags/${tag}`]);
     await gitOrThrow(repo.workDir, ["tag", "-d", tag]);
 
+    expect(await getLocalTagSha(repo, tag)).toBeNull();
+    expect(await getRemoteTagSha(repo, tag)).toBe(firstHead);
+
+    // executeReleaseTag fetches --tags before conflict checks, so the remote tag
+    // is materialized locally again and must hit the local mismatch branch first.
+
     const result = await runReleaseTag(repo);
 
     expect(result.exitCode).toBe(1);
