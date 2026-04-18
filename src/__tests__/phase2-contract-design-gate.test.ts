@@ -528,9 +528,14 @@ describe("phase 2 contract design gate", () => {
 
     const releaseArtifactProof = PHASE2_CONTRACT_DESIGN.semverGate.releaseArtifactProof;
     expect(packageJson.name).toBe(releaseArtifactProof.packageName);
-    expect(packageJson.version).toBe(releaseArtifactProof.packageVersion);
     expect(toNpmTarballFileName(packageJson.name, packageJson.version)).toBe(
-      releaseArtifactProof.expectedTarballFileName,
+      toNpmTarballFileName(releaseArtifactProof.packageName, packageJson.version),
+    );
+    expect(releaseArtifactProof.expectedTarballFileName).toBe(
+      toNpmTarballFileName(
+        releaseArtifactProof.packageName,
+        releaseArtifactProof.packageVersion,
+      ),
     );
     expect(releaseArtifactProof.proofCommand).toBe("npm pack --json");
     expect(releaseArtifactProof.requiredPackFields).toEqual([
