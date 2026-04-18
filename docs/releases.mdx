@@ -6,9 +6,22 @@ description: Versioning, changelog generation, and npm publishing.
 ## Release flow
 
 1. Update the package version intentionally.
-2. Commit the change with a conventional commit.
-3. Push a semver tag such as `v0.1.0`.
-4. The release workflow runs checks, builds docs, generates notes with `git-cliff`, creates a GitHub Release, and publishes to npm with provenance.
+2. Commit the version bump and merge/push it to the default branch.
+3. Sync your local default branch tip so `HEAD` exactly matches `origin/<defaultBranch>`.
+4. Run preflight on that synced commit: `bun run check && bun run docs:generate-api && bun run docs:build && bun run build`.
+5. Run `bun run release:tag` to create and push `vX.Y.Z` safely.
+6. If a local tag exists from a partial push failure, fix git remote access and run `bun run release:tag:force` from the same release commit/version.
+7. The release workflow verifies tag/version alignment and default-branch-tip alignment, runs checks, builds docs, publishes to npm with provenance, then generates notes with `git-cliff` and creates a GitHub Release.
+
+## Release helper safety checks
+
+`release:tag` fails closed unless all of these are true:
+
+- Root `package.json` contains a readable stable semver version.
+- Working tree is clean.
+- `HEAD` exactly matches `origin/<defaultBranch>` after refreshing refs.
+- Release tag state is safe (no conflicting local/remote `vX.Y.Z` tag).
+- Exact npm version `name@version` is not already published.
 
 ## Changelog strategy
 

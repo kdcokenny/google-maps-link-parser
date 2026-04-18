@@ -48,6 +48,8 @@
   "scripts": {
     "build": "bunup",
     "dev": "bunup --watch",
+    "release:tag": "bun run src/scripts/release-tag.ts",
+    "release:tag:force": "bun run src/scripts/release-tag.ts --force",
     "check": "bun run check:format && bun run check:lint && bun run check:types && bun run test",
     "check:format": "oxfmt --check .",
     "check:lint": "oxlint src",
