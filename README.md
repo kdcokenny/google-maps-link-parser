@@ -291,6 +291,9 @@ LIVE_GOOGLE_API_TESTS=1 GOOGLE_MAPS_API_KEY=your-key bun run test:live:providers
 
 1. Update `package.json` intentionally.
 2. Regenerate `bun.lock` if dependencies changed.
-3. Commit with conventional commits.
-4. Push a semver tag such as `v0.1.0`.
-5. GitHub Actions runs validation, generates release notes with `git-cliff`, creates a GitHub release, and publishes to npm with provenance.
+3. Commit the version bump and merge/push that commit to the default branch.
+4. Sync your local default-branch tip (`git pull --ff-only`) so `HEAD` exactly matches `origin/<defaultBranch>`.
+5. Run preflight on that synced commit: `bun run check && bun run docs:generate-api && bun run docs:build && bun run build`.
+6. Run `bun run release:tag`.
+7. Use `bun run release:tag:force` only when rerunning the same release commit/version after a partial push failure.
+8. GitHub Actions validates the repo, verifies tag/version alignment + default-branch-tip alignment, publishes to npm with provenance, then generates release notes with `git-cliff` and creates a GitHub release.

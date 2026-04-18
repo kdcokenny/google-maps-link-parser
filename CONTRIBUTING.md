@@ -31,6 +31,8 @@ bun run test:coverage
 bun run docs:dev
 bun run docs:build
 bun run docs:generate-api
+bun run release:tag
+bun run release:tag:force
 ```
 
 ## Test strategy
@@ -60,11 +62,13 @@ Commit messages are linted by the `commit-msg` hook.
 
 ## Release process
 
-1. Ensure `bun run check`, `bun run docs:generate-api`, and `bun run build` are clean.
-2. Update the version intentionally in `package.json`.
-3. Commit the version bump.
-4. Push a semver tag like `v0.2.0`.
-5. The release workflow validates the repo, generates notes with `git-cliff`, creates a GitHub release, and publishes to npm using trusted publishing.
+1. Update the version intentionally in `package.json`.
+2. Commit the version bump and merge/push it to the default branch.
+3. Sync your local default branch so `HEAD` exactly matches `origin/<defaultBranch>` (for example, `git pull --ff-only` on the default branch).
+4. Ensure preflight is clean on that synced commit: `bun run check && bun run docs:generate-api && bun run docs:build && bun run build`.
+5. Run `bun run release:tag` from the synced default-branch tip.
+6. If tag push partially failed after local tag creation, fix the push issue and run `bun run release:tag:force` from the same release commit/version.
+7. The release workflow validates the repo, verifies tag/version alignment and default-branch-tip alignment, publishes to npm using trusted publishing, then generates notes with `git-cliff` and creates a GitHub release.
 
 ## Notes for maintainers
 
