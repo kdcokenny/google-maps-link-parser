@@ -1,6 +1,6 @@
 {
   "name": "google-maps-link-parser",
-  "version": "0.1.2",
+  "version": "1.0.0",
   "description": "Bun-first TypeScript library for parsing, normalizing, unfurling, and optionally enriching public Google Maps URLs.",
   "keywords": [
     "bun",
